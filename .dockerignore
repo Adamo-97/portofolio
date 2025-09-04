@@ -1,0 +1,10 @@
+# for faster building
+node_modules
+.next
+.git
+.gitignore
+npm-debug.log*
+yarn-error.log*
+.env*
+Dockerfile*
+docker-compose*.yml

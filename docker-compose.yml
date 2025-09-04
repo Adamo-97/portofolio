@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: my-portfolio-dev
+    # bind mount your code for hot reload; keep node_modules in a container-only volume
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - next_cache:/app/.next
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      # if you use env vars, prefer a .env file and add it here with env_file:
+      # env_file:
+      #   - .env
+    # Speeds up file change detection inside containers on some systems
+    command: ["npm", "run", "dev"]
+
+volumes:
+  node_modules:
+  next_cache:
