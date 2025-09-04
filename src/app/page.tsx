@@ -1,103 +1,109 @@
+// app/page.tsx
+// Single-page layout with hero, roadmap, skills, and contact.
+// Replace the logo placeholder with your real logo when ready.
+
 import Image from "next/image";
+import Section from "@/components/Section";
+import Roadmap from "@/components/Roadmap";
+import { ROADMAP } from "@/data/roadmap";
+import SkillBadge from "@/components/Skillbadge";
 
-export default function Home() {
+export default function Page() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <main className="min-h-dvh bg-white text-black dark:bg-neutral-950 dark:text-white">
+      {/* HERO */}
+      <Section className="pt-16">
+        <div className="flex flex-col items-center text-center">
+          {/* TODO: Replace with your logo asset in /public and update src */}
+          <div className="relative mb-6 h-20 w-20 overflow-hidden rounded-2xl">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              src="/logo-placeholder.png" // put your logo file in /public
+              alt="Logo"
+              fill
+              className="object-cover"
+              priority
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight">Adam Abdullah</h1>
+          <p className="mt-2 max-w-2xl text-balance opacity-80">
+            Software Engineering student @ BTH · Full-stack developer · Data & dashboards ·
+            UI/UX enthusiast. Building apps, analytics, and automation.
+          </p>
+
+          {/* quick links */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm">
+            <a
+              href="https://github.com/Adamo-97"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4"
+            >
+              GitHub
+            </a>
+            <a
+              href="mailto:adam@example.com"
+              className="underline underline-offset-4"
+            >
+              Email
+            </a>
+            <a
+              href="#contact"
+              className="underline underline-offset-4"
+            >
+              Contact
+            </a>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </Section>
+
+      {/* SKILLS */}
+      <Section id="skills" title="Skills">
+        <div className="flex flex-wrap gap-2">
+          {["Next.js", "TypeScript", "Tailwind", "Node.js", "SQL", "Python", "Cypress", "Figma"].map(
+            (s) => (
+              <SkillBadge key={s} label={s} />
+            )
+          )}
+        </div>
+      </Section>
+
+      {/* ROADMAP */}
+      <Section id="roadmap" title="Interactive Roadmap">
+        <Roadmap items={ROADMAP} />
+      </Section>
+
+      {/* CONTACT / FOOTER */}
+      <Section id="contact" title="Contact">
+        <div className="max-w-2xl">
+          <p className="opacity-90">
+            Interested in collaborating or have a role in mind? Reach out:
+          </p>
+          <ul className="mt-3 space-y-1 text-sm">
+            <li>
+              <strong>Email:</strong>{" "}
+              <a className="underline underline-offset-4" href="mailto:adam@example.com">
+                adam@example.com
+              </a>
+            </li>
+            <li>
+              <strong>GitHub:</strong>{" "}
+              <a className="underline underline-offset-4" href="https://github.com/Adamo-97" target="_blank" rel="noreferrer">
+                github.com/Adamo-97
+              </a>
+            </li>
+            <li>
+              <strong>LinkedIn:</strong>{" "}
+              <a className="underline underline-offset-4" href="#" target="_blank" rel="noreferrer">
+                (add your profile)
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <p className="mt-10 text-xs opacity-60">
+          © {new Date().getFullYear()} Adam Abdullah. All rights reserved.
+        </p>
+      </Section>
+    </main>
   );
 }
