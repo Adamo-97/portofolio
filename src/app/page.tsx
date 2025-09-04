@@ -1,12 +1,9 @@
-// app/page.tsx
-// Single-page layout with hero, roadmap, skills, and contact.
-// Replace the logo placeholder with your real logo when ready.
-
 import Image from "next/image";
 import Section from "@/components/Section";
 import Roadmap from "@/components/Roadmap";
 import { ROADMAP } from "@/data/roadmap";
 import SkillBadge from "@/components/Skillbadge";
+import profile from "@/data/profile.json"; // <--- import JSON
 
 export default function Page() {
   return (
@@ -14,26 +11,22 @@ export default function Page() {
       {/* HERO */}
       <Section className="pt-16">
         <div className="flex flex-col items-center text-center">
-          {/* TODO: Replace with your logo asset in /public and update src */}
-          <div className="relative mb-6 h-20 w-20 overflow-hidden rounded-2xl">
+          <div className="relative mb-6 h-20 w-20 ">
             <Image
-              src="/logo-placeholder.png" // put your logo file in /public
+              src={profile.logo}
               alt="Logo"
               fill
-              className="object-cover"
+              className="object-contain invert-0 dark:invert"
               priority
             />
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight">Adam Abdullah</h1>
-          <p className="mt-2 max-w-2xl text-balance opacity-80">
-            Software Engineering student @ BTH · Full-stack developer · Data & dashboards ·
-            UI/UX enthusiast. Building apps, analytics, and automation.
-          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">{profile.name}</h1>
+          <p className="mt-2 max-w-2xl text-balance opacity-80">{profile.tagline}</p>
 
           {/* quick links */}
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm">
             <a
-              href="https://github.com/Adamo-97"
+              href={profile.links.github}
               target="_blank"
               rel="noreferrer"
               className="underline underline-offset-4"
@@ -41,13 +34,13 @@ export default function Page() {
               GitHub
             </a>
             <a
-              href="mailto:adam@example.com"
+              href={`mailto:${profile.links.email}`}
               className="underline underline-offset-4"
             >
               Email
             </a>
             <a
-              href="#contact"
+              href={profile.links.contact}
               className="underline underline-offset-4"
             >
               Contact
@@ -59,11 +52,9 @@ export default function Page() {
       {/* SKILLS */}
       <Section id="skills" title="Skills">
         <div className="flex flex-wrap gap-2">
-          {["Next.js", "TypeScript", "Tailwind", "Node.js", "SQL", "Python", "Cypress", "Figma"].map(
-            (s) => (
-              <SkillBadge key={s} label={s} />
-            )
-          )}
+          {profile.skills.map((s) => (
+            <SkillBadge key={s} label={s} />
+          ))}
         </div>
       </Section>
 
@@ -75,34 +66,40 @@ export default function Page() {
       {/* CONTACT / FOOTER */}
       <Section id="contact" title="Contact">
         <div className="max-w-2xl">
-          <p className="opacity-90">
-            Interested in collaborating or have a role in mind? Reach out:
-          </p>
+          <p className="opacity-90">Interested in collaborating or have a role in mind? Reach out:</p>
           <ul className="mt-3 space-y-1 text-sm">
             <li>
               <strong>Email:</strong>{" "}
-              <a className="underline underline-offset-4" href="mailto:adam@example.com">
-                adam@example.com
+              <a className="underline underline-offset-4" href={`mailto:${profile.links.email}`}>
+                {profile.links.email}
               </a>
             </li>
             <li>
               <strong>GitHub:</strong>{" "}
-              <a className="underline underline-offset-4" href="https://github.com/Adamo-97" target="_blank" rel="noreferrer">
-                github.com/Adamo-97
+              <a
+                className="underline underline-offset-4"
+                href={profile.links.github}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {profile.links.github.replace("https://", "")}
               </a>
             </li>
             <li>
               <strong>LinkedIn:</strong>{" "}
-              <a className="underline underline-offset-4" href="#" target="_blank" rel="noreferrer">
+              <a
+                className="underline underline-offset-4"
+                href={profile.links.linkedin}
+                target="_blank"
+                rel="noreferrer"
+              >
                 (add your profile)
               </a>
             </li>
           </ul>
         </div>
 
-        <p className="mt-10 text-xs opacity-60">
-          © {new Date().getFullYear()} Adam Abdullah. All rights reserved.
-        </p>
+        <p className="mt-10 text-xs opacity-60">{profile.footer}</p>
       </Section>
     </main>
   );
