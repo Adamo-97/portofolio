@@ -5,13 +5,16 @@
 @layer theme, base, components, utilities;
 @config "../tailwind.config.js";
 
+@layer theme {
+  :root {
+    --font-sans: var(--font-urbanist);
+  }
+}
 body {
   @apply leading-[normal] m-0;
 }
 @layer base {
-  *,
-  *::before,
-  *::after {
-    border-width: 0;
-  }
+  *, *::before, *::after { border-width: 0; }
+  html, body { margin: 0; line-height: normal; }
 }
+

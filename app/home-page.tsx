@@ -1,61 +1,114 @@
+// app/home-page.tsx
+"use client";
+
 import type { NextPage } from "next";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import Header from "../components/header";
-import MainPicPlaceholder from "../components/main-pic-placeholder";
+import MainPicPlaceholder from "../components/home/MainPicPlaceholder";
+import WordBubble from "../components/home/WordBubble";
+import HelloBadge from "../components/home/HelloBadge";
+import BgBlur from "../components/home/BgBlur";
+import FloatingCards from "../components/home/FloatingCards";
+import DowanloadCvButton from "../components/home/dowanload-cv-button";
+
+const MIN_H = 420;     // lower if you want smaller on tiny screens
+const MAX_H = 900;     // raise if you want taller on huge screens
+const GAP_TO_TITLE = 2; // px: positive leaves a gap, negative overlaps slightly
 
 const HomePage: NextPage = () => {
+  const seRef = useRef<HTMLSpanElement>(null);
+  const [artHeight, setArtHeight] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const calc = () => {
+      const se = seRef.current;
+      if (!se) return;
+
+      const rect = se.getBoundingClientRect();
+      const vh = window.innerHeight;
+
+      // We want image top to be at rect.bottom + GAP_TO_TITLE.
+      // With object-bottom, image top = vh - containerHeight.
+      // => containerHeight = vh - (rect.bottom + GAP_TO_TITLE)
+      const desired = Math.round(vh - (rect.bottom + GAP_TO_TITLE));
+      const clamped = Math.max(MIN_H, Math.min(MAX_H, desired));
+      setArtHeight(`${clamped}px`);
+    };
+
+    const ro = new ResizeObserver(calc);
+    if (seRef.current) ro.observe(seRef.current);
+    window.addEventListener("resize", calc);
+    calc();
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", calc);
+    };
+  }, []);
+
   return (
-    <div className="w-full h-[900px] relative bg-black flex flex-col items-start justify-start gap-[30px] min-w-[1000px] leading-[normal] tracking-[normal]">
+    <div className="relative w-full min-h-dvh bg-black text-white flex flex-col">
       <Header />
-      <main className="self-stretch flex-1 overflow-hidden flex flex-col items-center justify-start pt-5 px-5 pb-0">
-        <section className="flex flex-col items-center justify-start relative text-center text-[95.6px] font-urbanist">
-          <div className="flex flex-col items-center justify-start gap-2.5 z-[0]">
-            <div className="w-[124px] h-16 flex flex-row items-start justify-start">
-              <div className="flex flex-col items-start justify-start pt-[19px] px-0 pb-0">
-                <button className="cursor-pointer [border:none] py-[12.7px] px-[25px] bg-cornflowerblue-100 h-[45px] rounded-[38.2px] overflow-hidden shrink-0 flex flex-row items-center justify-center box-border hover:bg-cornflowerblue-200">
-                  <div className="relative text-xl tracking-[-0.01em] font-medium font-urbanist text-white text-left mq450:text-base">
-                    Hello!
-                  </div>
-                </button>
-              </div>
-              <Image
-                className="h-[28.5px] w-[27.5px] relative shrink-0 z-[1] ml-[-0.5px]"
-                loading="lazy"
-                width={27.5}
-                height={28.5}
-                sizes="100vw"
-                alt=""
-                src="/Vector-1.svg"
+      <main className="relative flex-1">
+        {/* Glow pinned to bottom (full opacity, crop 30%) */}
+        <BgBlur position="fixed" height="clamp(260px,80vh,800px)" cropPct={0} className="z-0" />
+
+        <section className="relative z-10 font-urbanist">
+          <div className="relative mx-auto w-full max-w-[913px] px-5 pt-24 text-center flex flex-col items-center">
+            <HelloBadge className="mx-auto -mb-[6px]" vectorScale={0.78} offsetTopPx={24} offsetRightPx={26} />
+
+            <h1 className="mt-6 leading-[1] tracking-[-0.01em] font-semibold text-[clamp(2rem,7vw,96px)]">
+              I’m{" "}
+              <WordBubble
+                text="Adam"
+                svgSrc="/Vector-22.svg"
+                padRatio={0.18}
+                yNudge={-8}
+                className="text-cornflowerblue-100"
               />
-            </div>
-            <div className="w-[913px] flex flex-row items-center justify-between relative gap-0">
-              <div className="w-[913px] relative tracking-[-0.01em] leading-[100%] font-semibold inline-block shrink-0 z-[0] mq450:text-[29px] mq450:leading-[38px] mq750:text-5xl mq750:leading-[57px]">
-                <p className="m-0">{`I’m  `}Adam</p>
-                <p className="m-0">Software Engineer</p>
-              </div>
-              <Image
-                className="h-[117px] w-[301px] absolute !!m-[0 important] top-[-14px] left-[393px] rounded-[25px] object-contain z-[1]"
-                loading="lazy"
-                width={301}
-                height={117}
-                sizes="100vw"
-                alt=""
-                src="/Vector-22.svg"
-              />
-            </div>
-          </div>
-          <div className="w-[86.2px] h-[88.2px] absolute !!m-[0 important] top-[227px] left-[2px] overflow-hidden flex items-center justify-center z-[1]">
-            <Image
-              className="w-full h-full object-cover absolute left-[3px] top-[4px] [transform:scale(1)]"
-              width={86.2}
-              height={88.2}
-              sizes="100vw"
-              alt=""
-              src="/Vector-2.svg"
-            />
+              <br />
+              <span ref={seRef} className="relative inline-block leading-[1]">
+                <span>Software Engineer</span>
+                <span
+                  aria-hidden
+                  className="absolute pointer-events-none"
+                  style={{
+                    width: "1.1em",
+                    height: "1.1em",
+                    left: 0,
+                    bottom: 0,
+                    transform: "translate(-0.83em, 0.70em)",
+                  }}
+                >
+                  <Image src="/Vector-2.svg" alt="" fill className="object-contain" />
+                </span>
+              </span>
+            </h1>
           </div>
         </section>
-        <MainPicPlaceholder />
+
+        {/* Portrait wrapper pinned to bottom; height computed to “kiss” the title */}
+        <div className="fixed inset-x-0 bottom-0 z-20 flex justify-center">
+          <div className="relative w-[min(95vw,720px)]" style={{ height: artHeight }}>
+            <MainPicPlaceholder className="h-full w-full" />
+
+            {/* If you want cards/CV button, render them HERE (kept off by default) */}
+            <FloatingCards
+              className="absolute inset-0 z-20"
+              leftCardSrc="/experience-section@2x.png"
+              rightCardSrc="/bcs-se@2x.png"
+            />
+            <DowanloadCvButton
+              className="absolute left-1/2 -translate-x-1/2 bottom-6 z-30"
+              href="/cv.pdf"
+              downloadAttr
+              downloadCV="Download CV"
+              iconPlaceholder="/icon-placeholder.svg"
+            />
+            
+          </div>
+        </div>
       </main>
     </div>
   );
