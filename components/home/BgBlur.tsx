@@ -10,7 +10,7 @@ type Props = {
 
 export default function BgBlur({
   className = "",
-  src = "/Ellipse-2.svg",
+  src = "/home/Ellipse-2.svg",
   height = "clamp(260px, 45vh, 520px)",
   cropPct = 30,                    // <- cut 30% from the bottom
   position = "fixed",              // <- sticks to bottom of the screen

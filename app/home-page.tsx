@@ -1,4 +1,3 @@
-// app/home-page.tsx
 "use client";
 
 import type { NextPage } from "next";
@@ -12,7 +11,7 @@ import BgBlur from "../components/home/BgBlur";
 import FloatingCards from "../components/home/FloatingCards";
 import DowanloadCvButton from "../components/home/dowanload-cv-button";
 
-// ---- your hooks (alias or relative) ----
+// Hooks
 import { useViewport } from "../src/hooks/useViewport";
 import { useElementRect } from "../src/hooks/useElementRect";
 import { useSlideScale } from "../src/hooks/useSlideScale";
@@ -27,7 +26,7 @@ const MIN_H = 380;
 const TEXT_OVERLAP = 100;
 
 const HomePage: NextPage = () => {
-  const mounted = useMounted(); // <-- NEW: prevents hydration mismatch
+  const mounted = useMounted(); // prevents hydration mismatch
 
   // refs
   const seRef = useRef<HTMLSpanElement>(null);
@@ -45,7 +44,7 @@ const HomePage: NextPage = () => {
   const artBoxRect = useElementRect(artBoxRef);
   const boxW = artBoxRect?.width ?? 0;
 
-  // portrait height (keeps visible overlap constant, handles 2K)
+  // portrait height
   const artHeight = usePortraitHeight({
     vh,
     seBottom: seRect?.bottom ?? null,
@@ -71,7 +70,7 @@ const HomePage: NextPage = () => {
           <section className="relative z-10 font-urbanist">
             <div
               className="relative mx-auto w-full max-w-[913px] px-5 text-center flex flex-col items-center"
-              style={{ paddingTop: "clamp(48px, 10vh, 180px)" }} // lets 2K push text lower
+              style={{ paddingTop: "clamp(48px, 10vh, 180px)" }}
             >
               <HelloBadge className="mx-auto -mb-[6px]" vectorScale={0.78} offsetTopPx={24} offsetRightPx={26} />
 
@@ -79,7 +78,7 @@ const HomePage: NextPage = () => {
                 I’m{" "}
                 <WordBubble
                   text="Adam"
-                  svgSrc="/Vector-22.svg"
+                  svgSrc="/home/Vector-22.svg"
                   padRatio={0.18}
                   yNudge={-8}
                   className="text-cornflowerblue-100"
@@ -98,7 +97,7 @@ const HomePage: NextPage = () => {
                       transform: "translate(-0.83em, 0.70em)",
                     }}
                   >
-                    <Image src="/Vector-2.svg" alt="" fill className="object-contain" />
+                    <Image src="/home/Vector-2.svg" alt="" fill className="object-contain" />
                   </span>
                 </span>
               </h1>
@@ -113,13 +112,20 @@ const HomePage: NextPage = () => {
                 onImgReady={(ar) => setImgAR(ar)}
               />
 
-              <FloatingCards className="absolute inset-0 z-20" />
+              <FloatingCards
+                className="absolute inset-0 z-20"
+                // Optional tiny edge gap and vertical nudges:
+                leftInsetX={-100}
+                rightInsetX={-100}
+                leftOffsetY={-10}   // up a bit if you want
+                rightOffsetY={20}    // down a bit if you want
+              />
               <DowanloadCvButton
                 className="absolute left-1/2 -translate-x-1/2 bottom-6 z-40"
                 href="/cv.pdf"
                 downloadAttr
                 downloadCV="Download CV"
-                iconPlaceholder="/icon-placeholder.svg"
+                iconPlaceholder="/home/icon-placeholder.svg"
               />
             </div>
           </div>

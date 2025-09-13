@@ -11,7 +11,7 @@ type Props = {
 
 export default function MainPicPlaceholder({
   className = "",
-  src = "/image-placeholder@2x.png",
+  src = "/home/image-placeholder@2x.png",
   scale = 1,
   onImgReady,
   innerStyle,

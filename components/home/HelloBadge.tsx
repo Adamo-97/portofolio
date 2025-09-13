@@ -14,7 +14,7 @@ type Props = {
 
 export default function HelloBadge({
   text = "Hello!",
-  vectorSrc = "/Vector-1.svg",
+  vectorSrc = "/home/Vector-1.svg",
   className = "",
   vectorScale = 0.75,
   offsetTopPx = 2,
