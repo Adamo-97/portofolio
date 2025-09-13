@@ -6,23 +6,23 @@ type Size = { width: number; height: number };
 
 type Props = {
   className?: string;
-
-  /** Left card asset (pass null/undefined to hide) */
   leftCardSrc?: string | null;
-  /** Right card asset (pass null/undefined to hide) */
   rightCardSrc?: string | null;
-
-  /** Absolute positioning for each card (top/left or top/right) */
-  leftStyle?: CSSProperties;   // e.g., { top: 323, left: -27 }
-  rightStyle?: CSSProperties;  // e.g., { top: 132, right: -5 }
-
-  /** Explicit sizes (defaults provided below) */
-  leftSize?: Size;   // default { width: 197, height: 154 }
-  rightSize?: Size;  // default { width: 273, height: 191 }
-
-  /** Corner radius in px */
-  cornerRadius?: number; // default 10
+  leftStyle?: CSSProperties;   // e.g., { bottom: 110, left: -16 }
+  rightStyle?: CSSProperties;  // e.g., { bottom: 200, right: -8 }
+  leftSize?: Size;             // default { width: 197, height: 154 }
+  rightSize?: Size;            // default { width: 273, height: 191 }
+  cornerRadius?: number;       // default 10
 };
+
+function mergePos(defaultPos: CSSProperties, override?: CSSProperties): CSSProperties {
+  const final: CSSProperties = { ...defaultPos, ...(override || {}) };
+  if (override && "bottom" in override) delete (final as any).top;
+  if (override && "top" in override) delete (final as any).bottom;
+  if (override && "left" in override) delete (final as any).right;
+  if (override && "right" in override) delete (final as any).left;
+  return final;
+}
 
 export default function FloatingCards({
   className = "",
@@ -34,6 +34,9 @@ export default function FloatingCards({
   rightSize = { width: 273, height: 191 },
   cornerRadius = 10,
 }: Props) {
+  const leftDefault: CSSProperties = { top: 323, left: -27 };
+  const rightDefault: CSSProperties = { top: 132, right: -5 };
+
   return (
     <div className={`pointer-events-none ${className}`}>
       {leftCardSrc && (
@@ -43,13 +46,9 @@ export default function FloatingCards({
           width={leftSize.width}
           height={leftSize.height}
           className="absolute object-contain"
-          style={{
-            top: 323,
-            left: -27,
-            borderRadius: cornerRadius,
-            ...leftStyle,
-          }}
+          style={{ borderRadius: cornerRadius, ...mergePos(leftDefault, leftStyle) }}
           priority
+          sizes="(max-width: 768px) 45vw, 320px"
         />
       )}
 
@@ -60,13 +59,9 @@ export default function FloatingCards({
           width={rightSize.width}
           height={rightSize.height}
           className="absolute object-contain"
-          style={{
-            top: 132,
-            right: -5,
-            borderRadius: cornerRadius,
-            ...rightStyle,
-          }}
+          style={{ borderRadius: cornerRadius, ...mergePos(rightDefault, rightStyle) }}
           priority
+          sizes="(max-width: 768px) 55vw, 380px"
         />
       )}
     </div>

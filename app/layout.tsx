@@ -5,8 +5,11 @@ export const metadata = { title: "portofolio" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={urbanist.variable}>
-      <body className="antialiased">{children}</body>
+    // Make the root viewport-height and non-scrollable
+    <html lang="en" className={`${urbanist.variable} h-dvh`}>
+      <body className="antialiased h-full overflow-hidden bg-black text-white">
+        {children}
+      </body>
     </html>
   );
 }
