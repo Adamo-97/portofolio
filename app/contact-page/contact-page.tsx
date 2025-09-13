@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import PhotoSocialContainer from "../../components/photo-social-container";
 import NameContainer from "../../components/name-container";
-import DowanloadCvButton from "../../components/home/dowanload-cv-button";
+import DowanloadCvButton from "../../components/home/download-cv-button";
 
 const ContactPage: NextPage = () => {
   const router = useRouter();

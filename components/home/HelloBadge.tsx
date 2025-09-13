@@ -7,9 +7,13 @@ type Props = {
   text?: string;
   vectorSrc?: string;
   className?: string;
-  vectorScale?: number;      // fraction of pill height (0.6–0.9 is nice)
-  offsetTopPx?: number;      // distance ABOVE the top edge (px)
-  offsetRightPx?: number;    // distance RIGHT of the right edge (px)
+  vectorScale?: number;    // ← keep this
+  offsetTopPx?: number;
+  offsetRightPx?: number;
+
+  show?: boolean;          // ← controls entrance; stays visible
+  durationMs?: number;
+  onDone?: () => void;
 };
 
 export default function HelloBadge({
@@ -19,13 +23,16 @@ export default function HelloBadge({
   vectorScale = 0.75,
   offsetTopPx = 2,
   offsetRightPx = 2,
+  show = false,
+  durationMs = 520,
+  onDone,
 }: Props) {
   const pillRef = useRef<HTMLSpanElement>(null);
   const [svgSize, setSvgSize] = useState(0);
 
   useEffect(() => {
-    if (!pillRef.current) return;
     const el = pillRef.current;
+    if (!el) return;
     const update = () => {
       const r = el.getBoundingClientRect();
       setSvgSize(Math.round(r.height * vectorScale));
@@ -34,11 +41,14 @@ export default function HelloBadge({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     window.addEventListener("resize", update);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", update);
-    };
+    return () => { ro.disconnect(); window.removeEventListener("resize", update); };
   }, [vectorScale]);
+
+  useEffect(() => {
+    if (!show) return;
+    const t = setTimeout(() => onDone?.(), durationMs + 60);
+    return () => clearTimeout(t);
+  }, [show, durationMs, onDone]);
 
   return (
     <span className="relative inline-block">
@@ -49,8 +59,11 @@ export default function HelloBadge({
           "rounded-full bg-cornflowerblue-100 text-white font-urbanist",
           "tracking-[-0.01em] leading-none",
           "text-[clamp(1rem,2.5vw,1.375rem)] px-[1em] py-[0.5em]",
+          "transition-all duration-500 ease-[cubic-bezier(.22,1,.36,1)]",
+          show ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-2 scale-95",
           className,
         ].join(" ")}
+        style={{ willChange: "opacity, transform" }}
       >
         {text}
       </span>
@@ -61,9 +74,12 @@ export default function HelloBadge({
           alt=""
           width={svgSize}
           height={svgSize}
-          className="pointer-events-none absolute"
-          // negative puts it OUTSIDE; increase numbers = push further up/right
-          style={{ top: `-${offsetTopPx}px`, right: `-${offsetRightPx}px` }}
+          className={[
+            "pointer-events-none absolute",
+            "transition-all duration-560 ease-[cubic-bezier(.22,1,.36,1)]",
+            show ? "opacity-100 translate-x-0 -translate-y-0 rotate-0" : "opacity-0 translate-x-2 -translate-y-1 rotate-[6deg]",
+          ].join(" ")}
+          style={{ top: `-${offsetTopPx}px`, right: `-${offsetRightPx}px`, willChange: "opacity, transform" }}
         />
       )}
     </span>
