@@ -27,49 +27,44 @@ const MIN_H = 380;
 const TEXT_OVERLAP = 100;
 
 const HomePage: NextPage = () => {
-  // --- hero animation state ---
+  // Sequence flags (just orchestration)
   const [goHello, setGoHello] = useState(false);
   const [goIm, setGoIm] = useState(false);
   const [goAdam, setGoAdam] = useState(false);
-
-  const [goSoft, setGoSoft] = useState(false);
+  const [goSoftwareType, setGoSoftwareType] = useState(false);
+  const [goRoles, setGoRoles] = useState(false);
+  const [showPortrait, setShowPortrait] = useState(false);
+  const [showCards, setShowCards] = useState(false);
   const [showSoftwareVector, setShowSoftwareVector] = useState(false);
+  const [showCvBtn, setShowCvBtn] = useState(false);
 
-  const [goRole, setGoRole] = useState(false);
-
-  // kick sequence
+  // Kick off the hello badge shortly after mount
   useEffect(() => {
-    const t = setTimeout(() => setGoHello(true), 120);
+    const t = setTimeout(() => setGoHello(true), 80);
     return () => clearTimeout(t);
   }, []);
 
-  // when Software fades in, reveal its vector and then start the role cycler
-  useEffect(() => {
-    if (!goSoft) return;
-    const t1 = setTimeout(() => setShowSoftwareVector(true), 240); // after Software fade
-    const t2 = setTimeout(() => setGoRole(true), 300);             // start cycler shortly after
+  // When roles finish their single pass, show portrait, then cards
+  const onRolesDone = () => {
+    setShowPortrait(true);
+    // let the portrait animation breathe, then bring cards
+    const t1 = setTimeout(() => setShowCards(true), 520);  
+    const t2 = setTimeout(() => setShowCvBtn(true), 520 + 420);  
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [goSoft]);
+  };
 
+  // Layout helpers (unchanged)
   const mounted = useMounted();
-
-  // refs
   const seRef = useRef<HTMLSpanElement>(null);
   const artBoxRef = useRef<HTMLDivElement>(null);
-
-  // state
   const [imgAR, setImgAR] = useState<number>(0);
 
-  // viewport + slide scaling
   const { vh } = useViewport();
   const { slideScale, style: computedSlideStyle } = useSlideScale(vh, MIN_SLIDE_H);
-
-  // element rects
   const seRect = useElementRect(seRef);
   const artBoxRect = useElementRect(artBoxRef);
   const boxW = artBoxRect?.width ?? 0;
 
-  // portrait height
   const artHeight = usePortraitHeight({
     vh,
     seBottom: seRect?.bottom ?? null,
@@ -78,10 +73,7 @@ const HomePage: NextPage = () => {
     minH: MIN_H,
   });
 
-  // image scale (kill top letterbox)
   const imgScale = useImageContainScale(artHeight, boxW, imgAR);
-
-  // stable style on first paint
   const slideStyle = mounted ? computedSlideStyle : { height: "100dvh" };
 
   return (
@@ -90,14 +82,21 @@ const HomePage: NextPage = () => {
         <Header />
 
         <main className="relative">
-          <BgBlur position="fixed" height={`${artHeight}px`} cropPct={0} topFade="30%" className="z-0" />
+          {/* Your gradient/particles background (enters on its own) */}
+          <BgBlur
+            position="fixed"
+            height={`${artHeight}px`}
+            cropPct={0}
+            topFade="30%"
+          />
 
+          {/* HERO TEXT */}
           <section className="relative z-10 font-urbanist">
             <div
               className="relative mx-auto w-full max-w-[913px] px-5 text-center flex flex-col items-center"
               style={{ paddingTop: "clamp(48px, 10vh, 180px)" }}
             >
-              {/* 1) Hello badge (stays) */}
+              {/* 1) Hello → triggers typing */}
               <HelloBadge
                 className="mx-auto -mb-[6px]"
                 vectorScale={0.78}
@@ -107,18 +106,16 @@ const HomePage: NextPage = () => {
                 onDone={() => setGoIm(true)}
               />
 
-              {/* 2) Title */}
-              <h1 className="mt-4 leading-[1] tracking-[-0.01em] font-semibold text-[clamp(2rem,7vw,96px)]">
-                {/* "I’m " types first */}
+              {/* 2) "I'm " + "Adam" (typed inside WordBubble) + "Software " */}
+              <h1 className="mt-4 leading-[1] tracking-[-0.01em] font-semibold text-[clamp(2rem,7vw,96px)] whitespace-nowrap">
                 <TypeText
-                  text={`I\u2019m\u00A0`} // I’m + NBSP
+                  text={"I’m "}
                   start={goIm}
                   speedMs={42}
                   onDone={() => setGoAdam(true)}
                   className="inline"
                 />
 
-                {/* Adam; bubble SVG fades AFTER typing */}
                 <WordBubble
                   text="Adam"
                   svgSrc="/home/Vector-22.svg"
@@ -128,75 +125,100 @@ const HomePage: NextPage = () => {
                   typeIn
                   startTyping={goAdam}
                   typeSpeedMs={70}
-                  revealBubbleAfterTyped
-                  bubbleFadeMs={240}
-                  bubbleDelayMs={40}
-                  onTypedDone={() => setGoSoft(true)}
+                  onTypedDone={() => setGoSoftwareType(true)}
                 />
 
                 <br />
 
-                {/* 3) One-line role, all FADE (no typing) */}
-                <span ref={seRef} className="relative inline-block leading-[1] whitespace-nowrap">
-                  {/* SOFTWARE fades in */}
-                  <span
-                    className={[
-                      "relative inline-block transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)]",
-                      goSoft ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[4px]",
-                    ].join(" ")}
-                  >
-                    Software&nbsp;
-                    {/* vector anchored to Software */}
-                    <span
-                      aria-hidden
-                      className={[
-                        "absolute pointer-events-none",
-                        showSoftwareVector ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-2 scale-95",
-                        "transition-all duration-400 ease-[cubic-bezier(.22,1,.36,1)]",
-                      ].join(" ")}
-                      style={{
-                        width: "1.1em",
-                        height: "1.1em",
-                        left: 0,
-                        bottom: 0,
-                        transform: "translate(-0.83em, 0.70em)",
-                      }}
-                    >
-                      <Image src="/home/Vector-2.svg" alt="" fill className="object-contain" />
-                    </span>
-                  </span>
+              {/* inside the title where Software types */}
+              <span ref={seRef} className="relative inline-block leading-[1] whitespace-nowrap">
+                {/* wrap TypeText in a relatively positioned span so the vector can anchor */}
+                <span className="relative inline-block">
+                  <TypeText
+                    text={"Software "}
+                    start={goSoftwareType}
+                    speedMs={48}
+                    onDone={() => {
+                      setShowSoftwareVector(true);   // show the swoosh
+                      setGoRoles(true);              // then fade the roles
+                    }}
+                    className="inline"
+                  />
 
-                  {/* Role fades: Designer → Developer → Engineer */}
-                  {goRole && (
-                    <RoleCycler
-                      start={goRole}
-                      words={["Designer", "Developer", "Engineer"]}
-                      initialDelayMs={180}   // wait a beat before first word (Designer)
-                      firstDwellMs={1000}    // keep Designer longer
-                      dwellMs={700}          // then normal timing
-                      transitionMs={300}
-                      effect="fade"          // pure fade
-                      className="inline font-semibold"
-                    />
-                  )}
+                  {/* the vector pinned to 'Software' baseline */}
+                  <span
+                    aria-hidden
+                    className={[
+                      "absolute pointer-events-none origin-bottom-left",
+                      showSoftwareVector ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-1 scale-95",
+                      "transition-all duration-300 ease-[cubic-bezier(.22,1,.36,1)]",
+                    ].join(" ")}
+                    style={{
+                      width: "1.1em",
+                      height: "1.1em",
+                      left: 0,
+                      bottom: 0,
+                      transform: "translate(-0.83em, 0.70em)",
+                    }}
+                  >
+                    <Image src="/home/Vector-2.svg" alt="" fill className="object-contain" />
+                  </span>
                 </span>
+                
+                {' '}
+
+                {goRoles && (
+                  <RoleCycler
+                    start={goRoles}
+                    words={["Designer", "Developer", "Engineer"]}
+                    initialDelayMs={180}
+                    firstDwellMs={1000}
+                    dwellMs={700}
+                    transitionMs={300}
+                    effect="fade"
+                    onDone={onRolesDone}     // ← use this instead of the inline callback
+                    className="inline font-semibold"
+                  />
+                )}
+              </span>
+
               </h1>
             </div>
           </section>
 
+          {/* 4) Portrait mounts AFTER RoleCycler finishes, so its own entrance plays */}
           <div className="fixed inset-x-0 bottom-0 z-30 flex justify-center">
-            <div ref={artBoxRef} className="relative w-[min(95vw,720px)]" style={{ height: `${artHeight}px` }}>
-              <MainPicPlaceholder
-                className="h-full w-full"
-                scale={imgScale}
-                onImgReady={(ar) => setImgAR(ar)}
-              />
+            <div
+              ref={artBoxRef}
+              className="relative w-[min(95vw,720px)]"
+              style={{ height: `${artHeight}px` }}
+            >
+              {showPortrait && (
+                <MainPicPlaceholder
+                  className="h-full w-full"
+                  scale={imgScale}
+                  onImgReady={(ar: number) => setImgAR(ar)}
+                />
+              )}
 
-              <FloatingCards
-                className="absolute inset-0 z-20"
-                sizeBoost={1.3}
-                gapBoost={1.5}
-              />
+              {/* 5) Floating cards wait a beat after portrait mounts, then animate themselves */}
+              {showPortrait && (
+                <div
+                  className={[
+                    "absolute inset-0 z-20",
+                    showCards ? "opacity-100" : "opacity-0",
+                    "transition-opacity duration-400 ease-[cubic-bezier(.22,1,.36,1)]",
+                  ].join(" ")}
+                >
+                  {showCards && (
+                    <FloatingCards
+                      className="absolute inset-0"
+                      sizeBoost={1.3}
+                      gapBoost={1.4}
+                    />
+                  )}
+                </div>
+              )}
 
               <DownloadCvButton
                 className="absolute left-1/2 -translate-x-1/2 bottom-6 z-40"
@@ -204,6 +226,10 @@ const HomePage: NextPage = () => {
                 downloadAttr
                 downloadCV="Download CV"
                 iconPlaceholder="/home/icon-placeholder.svg"
+                show={showCvBtn}       
+                animateIn               
+                enterDurationMs={520}
+                liftOnHover
               />
             </div>
           </div>

@@ -2,79 +2,12 @@
 import type { NextPage } from "next";
 import { useCallback } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Header from "../../components/header";
 
 const ProjectsPage: NextPage = () => {
-  const router = useRouter();
-
-  const onHomeButtonContainerClick = useCallback(() => {
-    router.push("/");
-  }, [router]);
-
-  const onSkillsButtonContainerClick = useCallback(() => {
-    router.push("/skills-page");
-  }, [router]);
-
-  const onRoadmapButtonContainerClick = useCallback(() => {
-    router.push("/roadmap-page");
-  }, [router]);
-
-  const onContactButtonContainerClick = useCallback(() => {
-    router.push("/contact-page");
-  }, [router]);
-
   return (
     <div className="w-full h-[900px] relative shadow-[0px_4px_4px_rgba(0,_0,_0,_0.25)] [background:linear-gradient(129.23deg,_rgba(0,_0,_0,_0),_rgba(24,_161,_253,_0.15)),_linear-gradient(77.08deg,_rgba(24,_161,_253,_0.15),_rgba(0,_0,_0,_0)),_#000] overflow-hidden flex flex-col items-start justify-start gap-[30px] min-w-[1000px] leading-[normal] tracking-[normal] mq675:h-auto">
-      <header className="self-stretch flex flex-row items-center justify-between pt-2.5 px-[120px] pb-0 gap-0 mq450:pl-5 mq450:pr-5 mq450:box-border mq750:pl-[60px] mq750:pr-[60px] mq750:box-border">
-        <Image
-          className="w-[42px] relative max-h-full"
-          loading="lazy"
-          width={42}
-          height={44}
-          sizes="100vw"
-          alt=""
-          src="/logo.svg"
-        />
-        <nav className="m-0 flex flex-row items-center justify-start gap-5 text-center text-xl text-white font-urbanist mq675:hidden">
-          <div
-            className="flex flex-row items-center justify-center p-2.5 cursor-pointer"
-            onClick={onHomeButtonContainerClick}
-          >
-            <h3 className="m-0 relative text-[length:inherit] tracking-[-0.01em] font-bold font-[inherit]">
-              Home
-            </h3>
-          </div>
-          <div
-            className="flex flex-row items-center justify-center p-2.5 cursor-pointer"
-            onClick={onSkillsButtonContainerClick}
-          >
-            <h3 className="m-0 relative text-[length:inherit] tracking-[-0.01em] font-bold font-[inherit]">
-              Skills
-            </h3>
-          </div>
-          <div
-            className="flex flex-row items-center justify-center py-2.5 px-[9px] cursor-pointer"
-            onClick={onRoadmapButtonContainerClick}
-          >
-            <h3 className="m-0 relative text-[length:inherit] tracking-[-0.01em] font-bold font-[inherit]">
-              Roadmap
-            </h3>
-          </div>
-          <div className="border-cornflowerblue-100 border-solid border-b-[1px] flex flex-row items-center justify-center pt-2.5 px-2.5 pb-2">
-            <h3 className="m-0 relative text-[length:inherit] tracking-[-0.01em] font-bold font-[inherit]">
-              Projects
-            </h3>
-          </div>
-          <div
-            className="flex flex-row items-center justify-center py-2.5 px-[9px] cursor-pointer"
-            onClick={onContactButtonContainerClick}
-          >
-            <h3 className="m-0 relative text-[length:inherit] tracking-[-0.01em] font-bold font-[inherit]">
-              Contact
-            </h3>
-          </div>
-        </nav>
-      </header>
+      <Header />
       <main className="self-stretch overflow-hidden flex flex-col items-center justify-start pt-9 px-[117px] pb-[100px] gap-[9px] text-center text-xs text-cornflowerblue-100 font-urbanist mq450:pt-5 mq450:px-5 mq450:pb-[42px] mq450:box-border mq750:pt-[23px] mq750:px-[58px] mq750:pb-[65px] mq750:box-border">
         <header className="self-stretch flex flex-row items-center justify-start pt-2.5 px-0 pb-[30px] gap-2.5 mq675:flex-wrap">
           <div className="h-[53px] rounded-[50px] overflow-hidden flex flex-row items-center justify-center">
