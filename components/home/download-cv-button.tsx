@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React, { useMemo, type CSSProperties } from "react";
+import React, { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 export type DownloadCvButtonProps =
   React.ComponentProps<"button"> & {
@@ -9,13 +9,24 @@ export type DownloadCvButtonProps =
     iconPlaceholder: string;
     href?: string;                 // optional: link to your CV (e.g., "/cv.pdf")
     downloadAttr?: boolean;        // optional: add download attribute on <a>
-    // Optional overrides; if provided, they will override the responsive defaults
+
+    // Optional sizing overrides
     downloadCvButtonHeight?: CSSProperties["height"];
     iconPlaceholderWidth?: CSSProperties["width"];
     iconPlaceholderHeight?: CSSProperties["height"];
+
+    // Entrance + control
+    animateIn?: boolean;           // animate when becoming visible
+    enterDelayMs?: number;         // delay before anim starts
+    enterDurationMs?: number;      // how long the anim takes
+    show?: boolean;                // <<< NEW: externally controlled visibility
+    resetOnHide?: boolean;         // reset animation state when show goes false (default true)
+
+    // Micro-interactions
+    liftOnHover?: boolean;         // subtle hover lift
   };
 
-export default function DownloadCvButton({  // name fixed, default export so your import can still be any name
+export default function DownloadCvButton({
   className = "",
   downloadCV = "Download CV",
   iconPlaceholder,
@@ -24,18 +35,44 @@ export default function DownloadCvButton({  // name fixed, default export so you
   downloadCvButtonHeight,
   iconPlaceholderWidth,
   iconPlaceholderHeight,
+  animateIn = true,
+  enterDelayMs = 200,
+  enterDurationMs = 520,
+  show = true,
+  resetOnHide = true,
+  liftOnHover = true,
   ...btnProps
 }: DownloadCvButtonProps) {
+  // "entered" drives the mount animation (opacity/translate/scale)
+  const [entered, setEntered] = useState<boolean>(!animateIn && show);
+
+  useEffect(() => {
+    if (!animateIn) {
+      setEntered(show);
+      return;
+    }
+    if (show) {
+      const t = setTimeout(() => setEntered(true), Math.max(0, enterDelayMs));
+      return () => clearTimeout(t);
+    } else if (resetOnHide) {
+      setEntered(false);
+    }
+  }, [show, animateIn, enterDelayMs, resetOnHide]);
+
   const wrapperStyle: CSSProperties = useMemo(
-    () => ({ height: downloadCvButtonHeight }),
-    [downloadCvButtonHeight]
+    () => ({
+      height: downloadCvButtonHeight,
+      transition: `opacity ${enterDurationMs}ms cubic-bezier(.22,1,.36,1), transform ${enterDurationMs}ms cubic-bezier(.22,1,.36,1)`,
+    }),
+    [downloadCvButtonHeight, enterDurationMs]
   );
+
   const iconStyle: CSSProperties = useMemo(
     () => ({ width: iconPlaceholderWidth, height: iconPlaceholderHeight }),
     [iconPlaceholderWidth, iconPlaceholderHeight]
   );
 
-  // === Inner pill (blue) — EXACT same paddings / radius ===
+  // === Inner pill (blue) — your existing ink effect ===
   const inner = (
     <div
       className={[
@@ -51,17 +88,16 @@ export default function DownloadCvButton({  // name fixed, default export so you
       ].join(" ")}
       style={
         {
-          ["--ink-color" as any]: "#0A6FC2", // darker on hover
+          ["--ink-color" as any]: "#0A6FC2",
           ["--ink-speed" as any]: "2.4s",
         } as React.CSSProperties
       }
     >
-      {/* label */}
       <div
         className={[
           "relative z-10",
           "text-[clamp(14px,2.2vw,25.7px)]",
-          "leading-none", // prevent extra vertical space
+          "leading-none",
           "tracking-[-0.01em] font-medium font-urbanist text-white text-left",
           "select-none",
         ].join(" ")}
@@ -69,7 +105,6 @@ export default function DownloadCvButton({  // name fixed, default export so you
         {downloadCV}
       </div>
 
-      {/* icon (rotates + nudges on hover) */}
       <span
         className={[
           "icon relative z-10 grid place-items-center",
@@ -89,7 +124,6 @@ export default function DownloadCvButton({  // name fixed, default export so you
         />
       </span>
 
-      {/* liquid fill via pseudo-elements — zero layout impact */}
       <style jsx>{`
         .inner::before,
         .inner::after {
@@ -131,14 +165,12 @@ export default function DownloadCvButton({  // name fixed, default export so you
         @media (prefers-reduced-motion: reduce) {
           .inner::before { transition: none; transform: scaleX(1); }
           .inner::after  { animation: none; opacity: 0.25; }
-          :global(.group:hover) .icon,
-          :global(.group:focus-visible) .icon { transform: none; }
         }
       `}</style>
     </div>
   );
 
-  // === Outer shell
+  // === Outer shell (entrance controlled by `entered`) ===
   const baseClasses = [
     "group",
     "cursor-pointer",
@@ -150,22 +182,37 @@ export default function DownloadCvButton({  // name fixed, default export so you
     "rounded-[clamp(26px,6vw,50px)]",
     "box-border overflow-hidden",
     "flex flex-row items-center justify-center",
+    // entrance
+    entered ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-[10px] scale-[0.985]",
+    // micro
+    "transform-gpu will-change-transform",
+    liftOnHover ? "hover:shadow-[0_10px_28px_rgba(24,161,253,0.25)]" : "",
+    "active:translate-y-0 active:scale-[0.99]",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cornflowerblue-100/80",
+    // keep it non-interactive while hidden
+    entered ? "pointer-events-auto" : "pointer-events-none",
   ].join(" ");
 
-  // Positioning is still entirely controlled by `className` prop.
-  // e.g. className="absolute left-1/2 -translate-x-1/2 bottom-6 z-40"
+  const content = inner;
+
   return href ? (
     <a
       href={href}
+      aria-label={downloadCV}
       {...(downloadAttr ? { download: "" } : {})}
       className={`${baseClasses} ${className}`}
       style={wrapperStyle}
     >
-      {inner}
+      {content}
     </a>
   ) : (
-    <button className={`${baseClasses} ${className}`} style={wrapperStyle} {...btnProps}>
-      {inner}
+    <button
+      aria-label={downloadCV}
+      className={`${baseClasses} ${className}`}
+      style={wrapperStyle}
+      {...btnProps}
+    >
+      {content}
     </button>
   );
 }
