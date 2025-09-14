@@ -11,12 +11,14 @@ type Props = {
   onClick?: () => void;
   glow?: boolean;
   palette?: Palette;
+  boxClassName?: string;
 };
 
 export default function Folder({
   active = false,
   size = "lg",
   className = "",
+  boxClassName = "",
   onClick,
   glow = false,
   palette = "blue",
@@ -40,23 +42,24 @@ export default function Folder({
   // FRONT rect from your SVG
   const FRONT_RECT = { x: 32, y: 150, w: 940, h: 656, r: 72 };
 
-  // Exact percentages for clip rounding (scale-proof)
-  const rxPct = (FRONT_RECT.r / FRONT_RECT.w) * 100;   // ≈ 7.6596%
-  const ryPct = (FRONT_RECT.r / FRONT_RECT.h) * 100;   // ≈ 10.9756%
-  const topPct = ((FRONT_RECT.y - 16) / 790) * 100;    // ≈ 16.962%
-    const sideInsetPct = 1.25; // safe margin per side (scales with size)
+
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
+  <div
+    onClick={onClick}
+    onKeyDown={(e) => {
+      if (!onClick) return;
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); }
+    }}
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    aria-pressed={onClick ? active : undefined}
+    aria-label="Folder"
+    className={[
         "relative inline-block group select-none",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cornflowerblue-100/70",
         className,
       ].join(" ")}
-      aria-pressed={active}
-      aria-label="Folder"
     >
       {glow && (
         <span
@@ -68,7 +71,7 @@ export default function Folder({
 
       <div className={["relative origin-bottom transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)]", scaleCls].join(" ")}>
         {/* Layout box with perspective so the open has depth */}
-        <div className="relative w-60 h-40 [perspective:1500px]">
+        <div className={["relative", boxClassName ?? "w-60 h-40", "[perspective:1500px]"].join(" ")}>
           {/* Back shell */}
           <svg data-part="back" viewBox="32 16 940 790" className="absolute inset-0 w-full h-full" aria-hidden>
             <defs>
@@ -80,88 +83,88 @@ export default function Folder({
             <path d={PATH_BACK} fill={`url(#back-${gid})`} />
           </svg>
 
-{/* === PAPERS (exact-fit: same width/radius as front rect) === */}
-{/* Layer 1 */}
-<svg
-  viewBox="32 16 940 790"
-  className={[
-    "absolute inset-0 w-full h-full origin-bottom pointer-events-none",
-    "transition-transform duration-300 ease",
-    active ? "[transform:rotateX(-20deg)]" : "group-hover:[transform:rotateX(-20deg)]",
-  ].join(" ")}
-  aria-hidden
->
-  <defs>
-    <clipPath id={`paper-clip-1-${gid}`}>
-      <rect x={32} y={150} width={940} height={656} rx={72} ry={72} />
-    </clipPath>
-  </defs>
-  <g clipPath={`url(#paper-clip-1-${gid})`}>
-    <rect x={32} y={150} width={940} height={656} fill="#a1a1aa" /> {/* zinc-400 */}
-  </g>
-</svg>
+        {/* === PAPERS (exact-fit: same width/radius as front rect) === */}
+        {/* Layer 1 */}
+        <svg
+        viewBox="32 16 940 790"
+        className={[
+            "absolute inset-0 w-full h-full origin-bottom pointer-events-none",
+            "transition-transform duration-300 ease",
+            active ? "[transform:rotateX(-20deg)]" : "group-hover:[transform:rotateX(-20deg)]",
+        ].join(" ")}
+        aria-hidden
+        >
+        <defs>
+            <clipPath id={`paper-clip-1-${gid}`}>
+            <rect x={32} y={150} width={940} height={656} rx={72} ry={72} />
+            </clipPath>
+        </defs>
+        <g clipPath={`url(#paper-clip-1-${gid})`}>
+            <rect x={32} y={150} width={940} height={656} fill="#a1a1aa" /> {/* zinc-400 */}
+        </g>
+        </svg>
 
-{/* Layer 2 */}
-<svg
-  viewBox="32 16 940 790"
-  className={[
-    "absolute inset-0 w-full h-full origin-bottom pointer-events-none",
-    "transition-transform duration-300 ease",
-    active ? "[transform:rotateX(-30deg)]" : "group-hover:[transform:rotateX(-30deg)]",
-  ].join(" ")}
-  aria-hidden
->
-  <defs>
-    <clipPath id={`paper-clip-2-${gid}`}>
-      <rect x={32} y={150} width={940} height={656} rx={72} ry={72} />
-    </clipPath>
-  </defs>
-  <g clipPath={`url(#paper-clip-2-${gid})`}>
-    <rect x={32} y={150} width={940} height={656} fill="#d4d4d8" /> {/* zinc-300 */}
-  </g>
-</svg>
+        {/* Layer 2 */}
+        <svg
+        viewBox="32 16 940 790"
+        className={[
+            "absolute inset-0 w-full h-full origin-bottom pointer-events-none",
+            "transition-transform duration-300 ease",
+            active ? "[transform:rotateX(-30deg)]" : "group-hover:[transform:rotateX(-30deg)]",
+        ].join(" ")}
+        aria-hidden
+        >
+        <defs>
+            <clipPath id={`paper-clip-2-${gid}`}>
+            <rect x={32} y={150} width={940} height={656} rx={72} ry={72} />
+            </clipPath>
+        </defs>
+        <g clipPath={`url(#paper-clip-2-${gid})`}>
+            <rect x={32} y={150} width={940} height={656} fill="#d4d4d8" /> {/* zinc-300 */}
+        </g>
+        </svg>
 
-{/* Layer 3 */}
-<svg
-  viewBox="32 16 940 790"
-  className={[
-    "absolute inset-0 w-full h-full origin-bottom pointer-events-none",
-    "transition-transform duration-300 ease",
-    active ? "[transform:rotateX(-38deg)]" : "group-hover:[transform:rotateX(-38deg)]",
-  ].join(" ")}
-  aria-hidden
->
-  <defs>
-    <clipPath id={`paper-clip-3-${gid}`}>
-      <rect x={32} y={150} width={940} height={656} rx={72} ry={72} />
-    </clipPath>
-  </defs>
-  <g clipPath={`url(#paper-clip-3-${gid})`}>
-    <rect x={32} y={150} width={940} height={656} fill="#e4e4e7" /> {/* zinc-200 */}
-  </g>
-</svg>
-{/* FRONT face (gradient, on top of papers) */}
-<svg
-  data-part="front"
-  viewBox="32 16 940 790"
-  className={[
-    "absolute inset-0 w-full h-full origin-bottom transition-transform duration-300 ease",
-    active ? "[transform:rotateX(-46deg)_translateY(1px)]"
-           : "group-hover:[transform:rotateX(-46deg)_translateY(1px)]",
-  ].join(" ")}
-  aria-hidden
->
-  <defs>
-    <linearGradient id={`front-${gid}`} x1="502" y1="150" x2="502" y2="806" gradientUnits="userSpaceOnUse">
-      <stop stopColor={col.frontFrom} />
-      <stop offset="1" stopColor={col.frontTo} />
-    </linearGradient>
-  </defs>
-  <rect x={32} y={150} width={940} height={656} rx={72} ry={72} fill={`url(#front-${gid})`} />
-</svg>
+        {/* Layer 3 */}
+        <svg
+        viewBox="32 16 940 790"
+        className={[
+            "absolute inset-0 w-full h-full origin-bottom pointer-events-none",
+            "transition-transform duration-300 ease",
+            active ? "[transform:rotateX(-38deg)]" : "group-hover:[transform:rotateX(-38deg)]",
+        ].join(" ")}
+        aria-hidden
+        >
+        <defs>
+            <clipPath id={`paper-clip-3-${gid}`}>
+            <rect x={32} y={150} width={940} height={656} rx={72} ry={72} />
+            </clipPath>
+        </defs>
+        <g clipPath={`url(#paper-clip-3-${gid})`}>
+            <rect x={32} y={150} width={940} height={656} fill="#e4e4e7" /> {/* zinc-200 */}
+        </g>
+        </svg>
+        {/* FRONT face (gradient, on top of papers) */}
+        <svg
+        data-part="front"
+        viewBox="32 16 940 790"
+        className={[
+            "absolute inset-0 w-full h-full origin-bottom transition-transform duration-300 ease",
+            active ? "[transform:rotateX(-46deg)_translateY(1px)]"
+                : "group-hover:[transform:rotateX(-46deg)_translateY(1px)]",
+        ].join(" ")}
+        aria-hidden
+        >
+        <defs>
+            <linearGradient id={`front-${gid}`} x1="502" y1="150" x2="502" y2="806" gradientUnits="userSpaceOnUse">
+            <stop stopColor={col.frontFrom} />
+            <stop offset="1" stopColor={col.frontTo} />
+            </linearGradient>
+        </defs>
+        <rect x={32} y={150} width={940} height={656} rx={72} ry={72} fill={`url(#front-${gid})`} />
+        </svg>
 
         </div>
       </div>
-    </button>
+    </div>
   );
 }

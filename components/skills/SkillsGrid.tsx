@@ -1,19 +1,17 @@
-// components/skills/SkillsGrid.tsx
 "use client";
 
 import Image from "next/image";
 import type { Skill } from "../../data/skills";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Folder from "./Folder";
 
-
+// ...keep your palette/category mapping if you have it
 const PALETTE_BY_CATEGORY: Record<string, "blue" | "red" | "purple" | "green"> = {
   Build: "blue",
   Design: "purple",
   Data: "green",
   Workflow: "red",
 };
-
 const paletteFor = (cat: string) => PALETTE_BY_CATEGORY[cat] ?? "blue";
 
 type Props = {
@@ -31,15 +29,30 @@ export default function SkillsGrid({
   iconHeight = 54,
   order = DEFAULT_ORDER,
 }: Props) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 20);
+    return () => clearTimeout(t);
+  }, []);
+
   if (groupBy !== "category") {
     const sorted = [...items].sort((a, b) => {
       const aw = a.weight ?? 9999, bw = b.weight ?? 9999;
       return aw === bw ? a.name.localeCompare(b.name) : aw - bw;
     });
     return (
-      <div className="flex flex-row flex-wrap content-start gap-8 sm:gap-6">
-        {sorted.map((s) => (
-          <FlatSkill key={s.id} skill={s} iconHeight={iconHeight} />
+      <div className="flex flex-row flex-wrap content-start gap-8 sm:gap-6 justify-center min-h-[100svh] items-end pb-20">
+        {sorted.map((s, i) => (
+          <div
+            key={s.id}
+            className={[
+              "transition-all duration-700 ease-[cubic-bezier(.22,1,.36,1)]",
+              mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6",
+            ].join(" ")}
+            style={{ transitionDelay: `${i * 60}ms` }}
+          >
+            <FlatSkill skill={s} iconHeight={iconHeight} />
+          </div>
         ))}
       </div>
     );
@@ -85,37 +98,69 @@ export default function SkillsGrid({
     }, 480);
   };
 
-  return (
-    <section className="relative w-full">
-      {/* TOP: icons + selected folder */}
-      <div className="relative w-full flex flex-col items中心">
-        <div className="relative z-20 flex flex-row flex-wrap justify-center gap-5 sm:gap-6 md:gap-8 -translate-y-1">
-          {visible.map((s, i) => (
-            <SkillIcon key={`${active}-${s.id}`} skill={s} iconHeight={iconHeight} delay={i * 24} />
-          ))}
-        </div>
+  // Responsive sizes for Folder "box"
+  const BOX_ACTIVE =
+    "w-[200px] h-[135px] sm:w-[240px] sm:h-[160px] md:w-[280px] md:h-[188px] lg:w-[320px] lg:h-[214px] xl:w-[360px] xl:h-[240px]";
+  const BOX_SMALL =
+    "w-[130px] h-[88px] sm:w-[150px] sm:h-[100px] md:w-[170px] md:h-[114px] lg:w-[190px] lg:h-[128px] xl:w-[210px] xl:h-[142px]";
 
-        <div
-          className={[
-            "relative z-10 mt-4 sm:mt-6 flex flex-col items-center",
-            "transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)]",
-            dropping ? "translate-y-8 scale-[0.92] opacity-95" : "translate-y-0 scale-100 opacity-100",
-            "[filter:drop-shadow(0_26px_70px_rgba(24,161,253,0.36))]",
-          ].join(" ")}
-        >
-          <Folder active palette={paletteFor(active)} />
-          <div className="mt-3 text-white font-urbanist font-semibold text-lg sm:text-xl tracking-[-0.01em]">
-            {active}
-          </div>
+return (
+  <section
+    className={[
+      // full viewport height, centered both axes
+      "relative w-full min-h-[100svh] grid place-items-center",
+      // comfy padding so labels don’t clip when scaled
+      "py-24 sm:py-28",
+      // fade/slide in the whole section
+      "transition-all duration-700 ease-[cubic-bezier(.22,1,.36,1)]",
+      mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
+    ].join(" ")}
+  >
+    {/* Centered vertical stack */}
+    <div className="w-full max-w-[1200px] flex flex-col items-center justify-center gap-8 sm:gap-10">
+      {/* icons ABOVE the selected folder */}
+      <div
+        className={[
+          "relative z-20 flex flex-row flex-wrap justify-center gap-5 sm:gap-6 md:gap-8",
+          "transition-all duration-700 ease-[cubic-bezier(.22,1,.36,1)]",
+          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
+        ].join(" ")}
+        style={{ transitionDelay: "120ms" }}
+      >
+        {visible.map((s, i) => (
+          <SkillIcon key={`${active}-${s.id}`} skill={s} iconHeight={iconHeight} delay={i * 24} />
+        ))}
+      </div>
+
+      {/* selected folder block (centered) */}
+      <div
+        className={[
+          "relative z-10 flex flex-col items-center",
+          "transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)]",
+          dropping ? "translate-y-2 scale-[0.97] opacity-95" : "translate-y-0 scale-100 opacity-100",
+          "[filter:drop-shadow(0_26px_70px_rgba(24,161,253,0.20))]",
+          // mount fade
+          "transition-opacity duration-700",
+          mounted ? "opacity-100" : "opacity-0",
+        ].join(" ")}
+        style={{ transitionDelay: "220ms" }}
+      >
+        <Folder
+          active
+          palette={paletteFor(active)}
+          boxClassName={BOX_ACTIVE}
+        />
+        <div className="mt-3 text-center text-white font-urbanist font-semibold text-lg sm:text-xl tracking-[-0.01em]">
+          {active}
         </div>
       </div>
 
-      {/* BOTTOM: other folders */}
-      <div className="mt-12 sm:mt-14">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 place-items-center">
+      {/* BOTTOM: unselected folders — centered row */}
+      <div className="w-full">
+        <div className="flex flex-wrap justify-center gap-6 sm:gap-8 pb-2">
           {cats
             .filter((c) => c !== active)
-            .map((cat) => {
+            .map((cat, idx) => {
               const isLifting = lifting === cat;
               return (
                 <button
@@ -128,12 +173,19 @@ export default function SkillsGrid({
                     className={[
                       "flex flex-col items-center transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)]",
                       isLifting
-                        ? "-translate-y-10 sm:-translate-y-14 scale-100"
-                        : "translate-y-4 sm:translate-y-6 scale-[0.86]",
+                        ? "-translate-y-6 sm:-translate-y-8 scale-100"
+                        : "translate-y-1.5 sm:translate-y-2.5 scale-[0.86]",
+                      // mount anim per tile
+                      "transition-all duration-700",
+                      mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
                     ].join(" ")}
+                    style={{ transitionDelay: `${300 + idx * 80}ms` }}
                   >
-                    <Folder size="sm" palette={paletteFor(cat)} />
-                    <div className="mt-2 text-white font-urbanist font-semibold text-base sm:text-lg tracking-[-0.01em]">
+                    <Folder
+                      palette={paletteFor(cat)}
+                      boxClassName={BOX_SMALL}
+                    />
+                    <div className="mt-2 text-center text-white font-urbanist font-semibold text-base sm:text-lg tracking-[-0.01em]">
                       {cat}
                     </div>
                   </div>
@@ -142,11 +194,13 @@ export default function SkillsGrid({
             })}
         </div>
       </div>
-    </section>
-  );
+    </div>
+  </section>
+);
+
 }
 
-/* ========= Icons (fixed height, no extra labels) ========= */
+/* ========= Icons ========= */
 function SkillIcon({
   skill,
   iconHeight,
