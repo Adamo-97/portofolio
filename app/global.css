@@ -18,3 +18,127 @@ body {
   html, body { margin: 0; line-height: normal; }
 }
 
+/* ==== Isometric Board System (bounded) ==== */
+/* Wrap keeps everything contained and provides a soft mask at edges */
+.iso-wrap {
+  position: relative;
+  overflow: hidden; /* hard stop so nothing spills out */
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+  /* Optional edge fade via mask for aesthetic */
+  -webkit-mask-image: radial-gradient(140% 100% at 50% 40%, #000 65%, transparent 100%);
+          mask-image: radial-gradient(140% 100% at 50% 40%, #000 65%, transparent 100%);
+}
+
+/* Back glow — a blurred, blended light that acts as a 'shadow' */
+.iso-glow {
+  position: absolute;
+  inset: -10% -10% -15% -10%;
+  z-index: 0;
+  background:
+    radial-gradient(40% 55% at 65% 35%, rgba(80,160,255,0.35), transparent 60%),
+    radial-gradient(45% 60% at 35% 65%, rgba(190,120,255,0.30), transparent 60%),
+    radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,0.10), transparent 70%);
+  filter: blur(38px) saturate(110%);
+  opacity: 0.9;
+  pointer-events: none;
+  mix-blend-mode: screen; /* blends with page nicely */
+}
+
+/* Subtle particle field — tiny specks that gently drift */
+.iso-particles {
+  position: absolute;
+  inset: -20% -20%;
+  z-index: 0;
+  background:
+    radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.20), transparent 60%),
+    radial-gradient(1.5px 1.5px at 60% 20%, rgba(255,255,255,0.15), transparent 60%),
+    radial-gradient(1.8px 1.8px at 80% 70%, rgba(255,255,255,0.18), transparent 60%),
+    radial-gradient(1.4px 1.4px at 35% 80%, rgba(255,255,255,0.12), transparent 60%),
+    radial-gradient(1.6px 1.6px at 15% 60%, rgba(255,255,255,0.14), transparent 60%);
+  animation: particlesDrift 18s linear infinite alternate;
+  filter: blur(0.2px);
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+@keyframes particlesDrift {
+  0%   { transform: translate3d(-6px, -4px, 0) scale(1);   opacity: 0.7; }
+  50%  { transform: translate3d( 6px,  3px, 0) scale(1.02); opacity: 0.9; }
+  100% { transform: translate3d( 2px, -2px, 0) scale(0.99); opacity: 0.75; }
+}
+
+/* 3D stage */
+.iso-scene {
+  --tiltX: 58deg;
+  --tiltZ: 45deg;
+  --tile: 96px; /* overridden by inline CSS var */
+  --gap: 12px;  /* overridden by inline CSS var */
+  --cols: 8;    /* overridden by inline CSS var */
+  --rows: 3;    /* overridden by inline CSS var */
+
+  position: relative;
+  z-index: 1; /* above glow/particles */
+  perspective: 900px;
+  padding: 40px 10px; /* breathing room inside wrapper */
+}
+
+.iso-board {
+  position: relative;
+  margin: 0 auto;
+
+  transform-style: preserve-3d;
+  transform: rotateX(var(--tiltX)) rotateZ(var(--tiltZ));
+
+  /* Width/height bounded by columns/rows */
+  width: calc(var(--cols) * (var(--tile) + var(--gap)) - var(--gap));
+  height: calc(var(--rows) * (var(--tile) + var(--gap)) - var(--gap));
+}
+
+/* Each tile knows its grid slot via CSS vars */
+.iso-tile {
+  --x: calc(var(--col) * (var(--tile) + var(--gap)));
+  --y: calc(var(--row) * (var(--tile) + var(--gap)));
+
+  position: absolute;
+  width: var(--tile);
+  height: var(--tile);
+  transform-style: preserve-3d;
+  transform: translateX(var(--x)) translateY(var(--y)) translateZ(0);
+
+  transition: transform 180ms ease, filter 180ms ease;
+  will-change: transform, filter;
+}
+
+.iso-tile .iso-face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
+  border: 1px solid rgba(255,255,255,0.12);
+  display: grid;
+  place-items: center;
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.06) inset,
+    0 30px 60px -20px rgba(0,0,0,0.6);
+}
+
+.iso-tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  transform: translateZ(-12px);
+  box-shadow: 0 20px 36px rgba(0,0,0,0.45);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.iso-tile:hover {
+  transform:
+    translateX(var(--x))
+    translateY(var(--y))
+    translateZ(22px) scale(1.03);
+  filter: brightness(1.06);
+}
