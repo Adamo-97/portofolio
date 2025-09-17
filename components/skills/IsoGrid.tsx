@@ -1,99 +1,73 @@
 "use client";
 
-import type { Skill } from "../../data/skills"; // adjust if your SKILLS file lives elsewhere
+import type { Skill } from "../../data/skills";
+import { useMemo, type CSSProperties } from "react";
 
 type Props = {
   items: Skill[];
-  cols?: number;     // max columns (desktop)
-  tile?: number;     // px size
-  gap?: number;      // px spacing
+  cols?: number; // kept for compatibility, not critical now
+  tile?: number;
+  gap?: number;
 };
 
-/**
- * Bounded isometric board with a soft back-glow and a subtle particle field.
- * - Never overflows its container (wrapper hides overflow).
- * - Columns are clamped; rows auto-wrap.
- * - Mobile falls back to a flat grid.
- */
 export default function IsoGrid({
   items,
   cols = 8,
   tile = 96,
   gap = 12,
 }: Props) {
-  // calculate rows needed (ceiling division) to set board height
-  const rows = Math.ceil(items.length / cols);
-
-  // Inline CSS variables keep Tailwind happy and let us pass knobs from props
-  const vars = {
-    "--tile": `${tile}px`,
-    "--gap": `${gap}px`,
-    "--cols": String(cols),
-    "--rows": String(rows),
-  };
+  const vars = useMemo(
+    () => ({
+      "--tile": `${tile}px`,
+      "--gap": `${gap}px`,
+      "--cols": String(cols),
+    }),
+    [cols, tile, gap]
+  );
 
   return (
-    <div className="mt-6">
-      {/* Mobile: simple neat grid */}
-      <div className="grid grid-cols-4 gap-3 sm:hidden">
+    <div className="relative" style={vars as CSSProperties}>
+      {/* Denser, smaller cards; also cap each card's max size so they never blow up */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4">
         {items.map((s) => (
           <div
             key={s.id}
-            className="aspect-square rounded-xl bg-white/5 border border-white/10 p-2 flex items-center justify-center"
+            className={[
+              "w-full max-w-[120px] mx-auto",        // cap size so they aren't huge
+              "relative aspect-square rounded-2xl",
+              "bg-white/[0.06] border border-white/10",
+              "flex items-center justify-center p-2 sm:p-2.5",
+            ].join(" ")}
             title={s.name}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={s.src} alt={s.name} className="max-w-[70%] max-h-[70%]" />
-          </div>
-        ))}
-      </div>
+            {/* icon wrapper with inner blue glow BEHIND the icon */}
+            <div className="relative w-[70%] h-[70%]">
+              {/* blue glow, behind the icon only */}
+              <span
+                aria-hidden
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 block rounded-full blur-[14px] opacity-70"
+                style={{
+                  width: "120%",
+                  height: "120%",
+                  background:
+                    "radial-gradient(closest-side, rgba(56,189,248,0.38), rgba(56,189,248,0.12) 55%, transparent 70%)",
+                }}
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={s.src}
+                alt={s.name}
+                className="w-full h-full object-contain select-none pointer-events-none filter drop-shadow-[0_0_10px_rgba(56,189,248,0.28)] opacity-95"
+                draggable={false}
+              />
+            </div>
 
-      {/* Desktop: bounded iso board */}
-      <div className="relative hidden sm:block">
-        {/* Wrapper ensures we never spill out of the layout */}
-        <div className="iso-wrap" style={vars as React.CSSProperties}>
-          {/* Glow + particles live behind the board */}
-          <div className="iso-glow" aria-hidden />
-          <div className="iso-particles" aria-hidden />
-
-          <div className="iso-scene">
-            <div className="iso-board">
-              {items.map((s, i) => {
-                const col = i % cols;
-                const row = Math.floor(i / cols);
-                return (
-                  <a
-                    key={s.id}
-                    href={s.href ?? "#"}
-                    className="iso-tile group"
-                    style={
-                      {
-                        // @ts-ignore css vars
-                        "--col": String(col),
-                        "--row": String(row),
-                      } as React.CSSProperties
-                    }
-                    aria-label={s.name}
-                    title={s.name}
-                  >
-                    <div className="iso-face">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={s.src}
-                        alt={s.name}
-                        className="h-[62%] w-[62%] object-contain opacity-90 transition group-hover:opacity-100"
-                        draggable={false}
-                      />
-                    </div>
-                    <div className="pointer-events-none absolute -bottom-7 left-1/2 -translate-x-1/2 text-[11px] text-white/65 opacity-0 transition group-hover:opacity-100">
-                      {s.name}
-                    </div>
-                  </a>
-                );
-              })}
+            {/* label */}
+            <div className="absolute bottom-2 left-0 right-0 text-center text-[11px] text-white/70">
+              {s.name}
             </div>
           </div>
-        </div>
+        ))}
       </div>
     </div>
   );
