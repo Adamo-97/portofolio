@@ -74,4 +74,5 @@ export const SKILLS: Skill[] = [
   { id: "clickup", name: "ClickUp",    src: "/skills/clickup-logo.svg",       box: 42, scale: 1, category: "QA & Workflow",  weight: 180 },
   { id: "trello",  name: "Trello",     src: "/skills/trello-logo.svg",        box: 50, scale: 1, category: "QA & Workflow",  weight: 230 },
   { id: "bash",    name: "Bash",       src: "/skills/bash-logo.svg",          box: 50, scale: 1, category: "QA & Workflow",  weight: 160 },
+  { id: "azure",   name: "Azure DevOps",      src: "/skills/azure-logo.svg",         box: 50, scale: 1, category: "QA & Workflow",  weight: 300 },
 ];
