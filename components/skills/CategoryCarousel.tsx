@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import { useCallback, useMemo } from "react";
 import {
   CATEGORIES,
@@ -21,14 +22,27 @@ export default function CategoryCarousel({ active, onChange }: Props) {
   const goNext = useCallback(() => onChange(next), [next, onChange]);
 
   const Chevron = ({ dir = "left" as "left" | "right" }) => (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden
+    >
       {dir === "left" ? <path d="M15 19l-7-7 7-7" /> : <path d="M9 5l7 7-7 7" />}
     </svg>
   );
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
-    if (e.key === "ArrowRight") { e.preventDefault(); goNext(); }
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      goPrev();
+    }
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      goNext();
+    }
   };
 
   return (
@@ -50,7 +64,6 @@ export default function CategoryCarousel({ active, onChange }: Props) {
           onClick={goPrev}
           className="inline-flex items-center justify-center rounded-md bg-white/5 border border-white/10 px-2 py-2 text-white/80 hover:bg-white/10 hover:text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           aria-label={`Previous: ${CATEGORIES[prev].title}`}
-          title={CATEGORIES[prev].title}
         >
           <Chevron dir="left" />
         </button>
@@ -91,7 +104,6 @@ export default function CategoryCarousel({ active, onChange }: Props) {
           onClick={goNext}
           className="inline-flex items-center justify-center rounded-md bg-white/5 border border-white/10 px-2 py-2 text-white/80 hover:bg-white/10 hover:text-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           aria-label={`Next: ${CATEGORIES[next].title}`}
-          title={CATEGORIES[next].title}
         >
           <Chevron dir="right" />
         </button>
