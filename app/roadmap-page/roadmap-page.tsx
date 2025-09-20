@@ -1,52 +1,71 @@
 "use client";
 import type { NextPage } from "next";
-import { useCallback } from "react";
-import Image from "next/image";
-import Nr1 from "../../components/nr1";
-import Nr2 from "../../components/nr2";
+import { useEffect, useState } from "react";
 import Header from "../../components/header";
+import StreetTimeline, {
+  RoadmapItem,
+} from "../../components/roadmap/StreetTimeline";
+
+type RoadmapJsonItem = RoadmapItem & {
+  from: string;          // ISO
+  to?: string | null;    // ISO | null | "ongoing"
+};
 
 const RoadmapPage: NextPage = () => {
+  const [items, setItems] = useState<RoadmapItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/data/roadmap.json", { cache: "no-store" });
+        const all: RoadmapJsonItem[] = await res.json();
+
+        // ensure from exists & sort by from desc
+        const latest4 = all
+          .filter((i) => !!i.from)
+          .sort(
+            (a, b) =>
+              new Date(b.from).getTime() - new Date(a.from).getTime()
+          )
+          .slice(0, 4)
+          .map(({ id, title, description, icon }) => ({
+            id,
+            title,
+            description,
+            icon,
+          }));
+
+        if (!cancelled) setItems(latest4);
+      } catch (e) {
+        console.error("Failed to load roadmap.json", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
-    <div className="w-full h-[900px] relative [background:linear-gradient(52deg,_rgba(24,_161,_253,_0.25),_rgba(0,_0,_0,_0)),_#000] overflow-hidden flex flex-col items-start justify-start gap-[30px] min-w-[1000px] leading-[normal] tracking-[normal]">
+    <div className="w-full h-[100svh] relative overflow-hidden flex flex-col bg-black">
       <Header />
- 
-      <main className="self-stretch flex-1 overflow-hidden flex flex-col items-center justify-center py-[73px] px-0 relative mq450:pt-[31px] mq450:pb-[31px] mq450:box-border mq750:pt-[47px] mq750:pb-[47px] mq750:box-border">
-        <div className="self-stretch flex-1 relative max-w-full max-h-full overflow-hidden flex items-center justify-center z-[0]">
-          <Image
-            className="self-stretch flex-1 overflow-hidden object-cover absolute left-[0px] top-[9px] w-full h-full [transform:scale(1)]"
-            width={1440}
-            height={670}
-            sizes="100vw"
-            alt=""
-            src="/street-illustration.svg"
+
+      <main className="relative flex-1 flex items-center justify-center p-6">
+        {/* BLUE BLUR BACKGROUND */}
+        <div aria-hidden className="absolute inset-0 -z-10">
+          <div className="absolute left-1/2 top-[15%] h-[60vh] w-[60vh] -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl" />
+          <div className="absolute left-[8%] bottom-[10%] h-[45vh] w-[45vh] rounded-full bg-cyan-400/10 blur-3xl" />
+          <div className="absolute right-[10%] top-[30%] h-[50vh] w-[50vh] rounded-full bg-blue-400/10 blur-3xl" />
+        </div>
+
+        <div className="relative w-full max-w-6xl">
+          <StreetTimeline
+            items={items}
+            dash={22}        // longer lane segments
+            gap={12}         // small gap between segments
+            strokeWidth={4}  // thicker line
           />
         </div>
-        <Nr1
-          logoContainer="/logo-container2.svg"
-          pinBody="/pin-body.svg"
-          descriptionPlaceholdr="Supporting people with disabilities, developing empathy, patience, and teamwork in a care-focused environment."
-        />
-        <Nr2
-          descriptionPlaceholdr="Started studying at BTH, focusing on software engineering, system design, and web development."
-          pinBody="/pin-body.svg"
-          logoContainer="/logo-container4.svg"
-        />
-        <Nr1
-          nr4Top="45px"
-          nr4Left="709px"
-          logoContainer="/logo-container.svg"
-          pinBody="/pin-body.svg"
-          descriptionPlaceholdr="Created a gaming channel as a creative outlet and to build a community around shared interests."
-        />
-        <Nr2
-          nr3Top="271px"
-          nr3Left="779px"
-          titlePlaceholderMargin="0"
-          descriptionPlaceholdr="Collaborated with NKT to integrate a (LLM) into their internal API, enhancing data access and analytics workflows."
-          pinBody="/pin-body.svg"
-          logoContainer="/logo-container3.svg"
-        />
       </main>
     </div>
   );
