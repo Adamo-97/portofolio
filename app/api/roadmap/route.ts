@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/backend/supabaseClient";
 
 export async function GET() {
-  // 1) get newest 5 by start_date
+  // 1) get newest 5 by start_date that are not in the future
+  const nowIso = new Date().toISOString();
   const { data, error } = await supabase
     .from("roadmap_item")
     .select("id,title,details,start_date,end_date,icon_bucket,icon_path,icon_alt")
+    .lte("start_date", nowIso)
     .order("start_date", { ascending: false })
     .limit(5);
 
