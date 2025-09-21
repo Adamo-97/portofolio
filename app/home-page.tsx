@@ -4,22 +4,22 @@ import type { NextPage } from "next";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
-import Header from "../components/header";
-import MainPicPlaceholder from "../components/home/MainPicPlaceholder";
-import WordBubble from "../components/home/WordBubble";
-import HelloBadge from "../components/home/HelloBadge";
-import BgBlur from "../components/home/BgBlur";
-import FloatingCards from "../components/home/FloatingCards";
-import DownloadCvButton from "../components/home/download-cv-button";
-import TypeText from "../components/home/TypeText";
-import RoleCycler from "../components/home/RoleCycler";
+import Header from "@/components/header";
+import MainPicPlaceholder from "@/components/home/MainPicPlaceholder";
+import WordBubble from "@/components/home/WordBubble";
+import HelloBadge from "@/components/home/HelloBadge";
+import BgBlur from "@/components/home/BgBlur";
+import FloatingCards from "@/components/home/FloatingCards";
+import DownloadCvButton from "@/components/home/download-cv-button";
+import TypeText from "@/components/home/TypeText";
+import RoleCycler from "@/components/home/RoleCycler";
 
-import { useViewport } from "../src/hooks/useViewport";
-import { useElementRect } from "../src/hooks/useElementRect";
-import { useSlideScale } from "../src/hooks/useSlideScale";
-import { usePortraitHeight } from "../src/hooks/usePortraitHeight";
-import { useImageContainScale } from "../src/hooks/useImageContainScale";
-import { useMounted } from "../src/hooks/useMounted";
+import { useViewport } from "@/src/hooks/useViewport";
+import { useElementRect } from "@/src/hooks/useElementRect";
+import { useSlideScale } from "@/src/hooks/useSlideScale";
+import { usePortraitHeight } from "@/src/hooks/usePortraitHeight";
+import { useImageContainScale } from "@/src/hooks/useImageContainScale";
+import { useMounted } from "@/src/hooks/useMounted";
 
 const MIN_SLIDE_H = 560;
 const MIN_W = 320;
