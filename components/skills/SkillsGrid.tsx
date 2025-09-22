@@ -2,21 +2,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CATEGORIES, type CategoryKey } from "./categories";
 import { useViewportStage } from "./useViewportStage";
 import { SkillCard } from "./SkillCard";
 
-const ORDER: CategoryKey[] = [
-  "Languages",
-  "Frontend",
-  "Backend & Data",
-  "Mobile",
-  "Design & IDEs",
-  "QA & Workflow",
-];
-
 const BASE = { cardW: 360, gap: 24, cardRatio: 4 / 3, padY: 40 };
-
 type Spec = { cols: number; rows: number };
 
 // Minimal skill shape used by our UI
@@ -32,8 +21,26 @@ export type UISkill = {
 
 export default function SkillsGrid() {
   const [allSkills, setAllSkills] = useState<UISkill[]>([]);
+  const [cats, setCats] = useState<{ key: string; title: string; blurb: string }[]>([]);
 
-  // Fetch skills from the new API (Supabase-backed)
+  // Fetch categories (DB: skill_category with title/blurb)
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/skill-categories", { cache: "no-store" });
+        if (!r.ok) throw new Error(String(r.status));
+        const items = await r.json();
+        if (!off) setCats(items);
+      } catch (e) {
+        console.error("[SkillsGrid] fetch /api/skill-categories failed:", e);
+        if (!off) setCats([]);
+      }
+    })();
+    return () => { off = true; };
+  }, []);
+
+  // ✅ Fetch skills (Supabase-backed)
   useEffect(() => {
     let off = false;
     (async () => {
@@ -44,37 +51,24 @@ export default function SkillsGrid() {
         if (!off) setAllSkills(items);
       } catch (e) {
         console.error("[SkillsGrid] fetch /api/skills failed:", e);
-        if (!off) setAllSkills([]); // graceful empty state
+        if (!off) setAllSkills([]);
       }
     })();
-    return () => {
-      off = true;
-    };
+    return () => { off = true; };
   }, []);
 
-  // Bucket by the six fixed categories that your UI already knows about
+  // Bucket skills by fetched categories
   const byCat = useMemo(() => {
-    const map: Record<CategoryKey, UISkill[]> = {
-      Languages: [],
-      Frontend: [],
-      "Backend & Data": [],
-      Mobile: [],
-      "Design & IDEs": [],
-      "QA & Workflow": [],
-    };
-
+    const map: Record<string, UISkill[]> = {};
+    for (const c of cats) map[c.key] = [];
     for (const s of allSkills) {
-      // Only place skills that match one of the six known categories
-      if (s.category && (ORDER as string[]).includes(s.category)) {
-        map[s.category as CategoryKey].push(s);
-      }
+      if (s.category && map[s.category]) map[s.category].push(s);
     }
-
-    // Preserve your old per-card ordering logic (weight asc)
-    ORDER.forEach((k) => map[k].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0)));
+    Object.keys(map).forEach(k => map[k].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0)));
     return map;
-  }, [allSkills]);
+  }, [cats, allSkills]);
 
+  // 3x2 vs 2x3 layout
   const [spec, setSpec] = useState<Spec>({ cols: 2, rows: 3 });
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 640px)");
@@ -84,7 +78,7 @@ export default function SkillsGrid() {
     return () => mq.removeEventListener?.("change", apply);
   }, []);
 
-  const STAGE = useMemo(() => ({ ...BASE, cols: spec.cols, rows: spec.rows }), [spec]);
+  const STAGE = { ...BASE, cols: spec.cols, rows: spec.rows };
   const { stageStyle, wrapperStyle } = useViewportStage(STAGE);
 
   return (
@@ -98,11 +92,13 @@ export default function SkillsGrid() {
             gap: STAGE.gap,
           }}
         >
-          {ORDER.slice(0, STAGE.cols * STAGE.rows).map((cat, i) => (
-            <li key={cat}>
+          {cats.slice(0, STAGE.cols * STAGE.rows).map((c, i) => (
+            <li key={c.key}>
               <SkillCard
-                category={cat}
-                items={byCat[cat] ?? []}
+                categoryKey={c.key}
+                title={c.title}
+                blurb={c.blurb}
+                items={byCat[c.key] ?? []}
                 cardW={STAGE.cardW}
                 cardRatio={STAGE.cardRatio}
                 cardIndex={i}

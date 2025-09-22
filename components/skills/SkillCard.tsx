@@ -1,7 +1,6 @@
 // components/skills/SkillCard.tsx
 "use client";
 
-import { CATEGORIES, type CategoryKey } from "./categories";
 import SkillIcon from "./SkillIcon";
 
 // Minimal shape used by this component
@@ -13,28 +12,26 @@ export type UISkill = {
   yOffset?: number;
 };
 
-type Props = {
-  category: CategoryKey;
-  items: UISkill[];
-  cardW: number;
-  cardRatio: number; // width / height
-  cardIndex: number;
-};
-
 export function SkillCard({
-  category,
+  categoryKey,
+  title,
+  blurb,
   items,
   cardW,
   cardRatio,
   cardIndex,
-}: Props) {
+}: {
+  categoryKey: string;
+  title: string;
+  blurb: string;
+  items: UISkill[];
+  cardW: number;
+  cardRatio: number; // width / height
+  cardIndex: number;
+}) {
   return (
     <div
-      className={[
-        "relative rounded-2xl border bg-white/[0.06] border-white/10 backdrop-blur-[2px]",
-        "grid overflow-hidden",
-        "animate-card",
-      ].join(" ")}
+      className="relative rounded-2xl border bg-white/[0.06] border-white/10 backdrop-blur-[2px] grid overflow-hidden animate-card"
       style={{
         width: cardW,
         height: cardW / cardRatio,
@@ -42,7 +39,7 @@ export function SkillCard({
         animationDelay: `${cardIndex * 120}ms`,
         animationFillMode: "both",
       }}
-      aria-label={CATEGORIES[category].title}
+      aria-label={title}
     >
       {/* subtle glow */}
       <div
@@ -54,21 +51,21 @@ export function SkillCard({
         }}
       />
 
-      {/* Title lane */}
+      {/* Title */}
       <div className="px-5 pt-5">
         <h2 className="text-center text-[20px] leading-[28px] font-semibold tracking-tight">
-          {CATEGORIES[category].title}
+          {title}
         </h2>
       </div>
 
-      {/* Description lane */}
+      {/* Description */}
       <div className="px-5">
         <p className="text-[12px] leading-[16px] text-white/75 line-clamp-2 text-left">
-          {CATEGORIES[category].blurb}
+          {blurb}
         </p>
       </div>
 
-      {/* Icons lane */}
+      {/* Icons */}
       <div className="px-4 pb-5 h-full min-h-0">
         <div
           className="grid grid-cols-3 gap-3 h-full min-h-0"
