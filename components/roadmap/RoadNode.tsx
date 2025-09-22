@@ -1,6 +1,5 @@
+// components/roadmap/RoadNode.tsx
 "use client";
-import { useMemo } from "react";
-import RoadText from "./RoadText";
 
 export type RoadmapItem = {
   id: string;
@@ -10,114 +9,125 @@ export type RoadmapItem = {
   from?: string;
   to?: string | null;
 };
-
-type Props = {
-  item: RoadmapItem;   // singular here ✅
-  above: boolean;
-  accentColor?: string;
-  iconSize?: number;
-  gapFromLine?: number;
-  tipSize?: number;
-  glowSize?: number;
-  glowBlur?: number;
-  laneHeight?: number;
-  textWidth?: number;
-  textBlock?: number;
-};
+export type RoadPos = "top" | "bottom" | "left" | "right";
 
 export default function RoadNode({
   item,
-  above,
+  pos,
   accentColor = "#7dd3fc",
   iconSize = 88,
-  gapFromLine = 12,
-  tipSize = 10,
-  glowSize = 140,
-  glowBlur = 26,
-  laneHeight = 460,
-  textWidth = 360,
-  textBlock = 150,
-}: Props) {
-  const styles = useMemo(() => {
-    const dotTop = `calc(50% - ${tipSize / 2}px)`;
-    const iconTopAbove = `calc(50% - ${tipSize / 2 + gapFromLine + iconSize}px)`;
-    const iconTopBelow = `calc(50% + ${tipSize / 2 + gapFromLine}px)`;
-    const textGap = 10;
-    const textTopAbove = `calc(50% - ${tipSize / 2 + gapFromLine + iconSize}px - ${textBlock}px - ${textGap}px)`;
-    const textTopBelow = `calc(50% + ${tipSize / 2 + gapFromLine + iconSize + textGap}px)`;
-    return { dotTop, iconTopAbove, iconTopBelow, textTopAbove, textTopBelow };
-  }, [tipSize, gapFromLine, iconSize, textBlock]);
+  width = 420,
+  appearDelayMs = 0,
+  padFromRoad = 14,
+}: {
+  item: RoadmapItem;
+  pos: RoadPos;
+  accentColor?: string;
+  iconSize?: number;
+  width?: number;
+  appearDelayMs?: number;
+  padFromRoad?: number;
+}) {
+  const gap = Math.round(iconSize * 0.18);                // scales with icon
+  const diamondPx = Math.round(clamp(iconSize * 0.12, 8, 16));
+  const descMax = Math.round(clamp(width - 40, 220, width - 20));
 
-  return (
-    <div className="relative" style={{ height: laneHeight }}>
-      {/* diamond dot on line */}
+  const Icon = (
+    <div
+      className="relative grid place-items-center opacity-0 animate-iconIn"
+      style={{ height: iconSize, width: iconSize, animationDelay: `${appearDelayMs + 200}ms` }}
+    >
       <span
         aria-hidden
-        className="absolute z-10"
+        className="absolute rounded-full pointer-events-none animate-pulseGlow"
         style={{
-          top: styles.dotTop,
-          left: "50%",
-          transform: "translateX(-50%) rotate(45deg)",
-          width: tipSize,
-          height: tipSize,
+          width: Math.round(iconSize * 1.6),
+          height: Math.round(iconSize * 1.6),
           background: accentColor,
-          boxShadow: `0 0 12px ${accentColor}55`,
-          borderRadius: 2,
+          opacity: 0.22,
+          filter: "blur(26px)",
+          zIndex: -1,
         }}
       />
-      {/* text */}
-      <div
-        className="absolute z-10"
-        style={{
-          top: above ? styles.textTopAbove : styles.textTopBelow,
-          left: "50%",
-          transform: "translateX(-50%)",
-          height: textBlock,
-          display: "grid",
-          placeItems: "center",
-        }}
-      >
-        <RoadText
-          title={item.title}
-          description={item.description}
-          from={item.from}
-          to={item.to}
-          accentColor={accentColor}
-          width={textWidth}
-        />
-      </div>
-      {/* icon */}
-      <div
-        className="absolute z-10 grid place-items-center transition-transform duration-300"
-        style={{
-          top: above ? styles.iconTopAbove : styles.iconTopBelow,
-          left: "50%",
-          transform: "translateX(-50%)",
-          height: iconSize,
-          width: iconSize,
-        }}
-      >
-        <span
-          aria-hidden
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 140,
-            height: 140,
-            background: accentColor,
-            opacity: 0.25,
-            filter: `blur(26px)`,
-            zIndex: -1,
-          }}
-        />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {item.icon ? (
-          <img src={item.icon} alt="" className="object-contain select-none" style={{ height: iconSize, width: iconSize }} draggable={false} />
-        ) : (
-          <span className="grid place-items-center text-sm font-semibold text-sky-50" style={{ height: iconSize, width: iconSize }}>
-            {item.title.slice(0, 1)}
-          </span>
-        )}
-      </div>
+      {item.icon ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={item.icon} alt="" className="object-contain select-none" style={{ height: iconSize, width: iconSize }} />
+      ) : (
+        <span className="grid place-items-center text-sm font-semibold text-sky-50" style={{ height: iconSize, width: iconSize }}>
+          {item.title.slice(0, 1)}
+        </span>
+      )}
     </div>
   );
+
+  const Diamond = (
+    <span
+      aria-hidden
+      className="inline-block"
+      style={{
+        width: diamondPx,
+        height: diamondPx,
+        background: accentColor,
+        borderRadius: 2,
+        transform: "rotate(45deg)",
+        boxShadow: `0 0 10px ${accentColor}80`,
+      }}
+    />
+  );
+
+  function fmtRange(from?: string, to?: string | null) {
+    if (!from) return "";
+    const f = new Date(from);
+    const t = to ? new Date(to) : null;
+    const safe = (d: Date) =>
+      isNaN(d.getTime()) ? "" : d.toLocaleString(undefined, { month: "short", year: "numeric" });
+    const fm = safe(f);
+    const tm = t ? safe(t) : "Present";
+    return fm && tm ? `${fm} – ${tm}` : fm || tm || "";
+  }
+
+  const Text = (
+    <div className="text-center opacity-0 animate-nodeIn" style={{ width, animationDelay: `${appearDelayMs + 320}ms` }}>
+      <div className="text-sky-50 text-[18px] font-semibold leading-tight">{item.title}</div>
+      <div className="mt-0.5 text-[12px] italic hidden sm:block" style={{ color: accentColor }}>
+        {fmtRange(item.from, item.to)}
+      </div>
+      <p className="mt-2 text-[14px] leading-snug text-sky-100/85 hidden sm:block" style={{ maxWidth: descMax, margin: "0 auto" }}>
+        {item.description}
+      </p>
+    </div>
+  );
+
+  const Stack = pos === "top" || pos === "right" ? [Text, Icon, Diamond] : [Diamond, Icon, Text];
+
+  const padStyle =
+    pos === "top"
+      ? { paddingBottom: padFromRoad }
+      : pos === "bottom"
+      ? { paddingTop: padFromRoad }
+      : undefined;
+
+  return (
+    <div
+      className="relative z-20 flex flex-col items-center"
+      style={{ gap, ...padStyle }}
+    >
+      {Stack.map((el, i) => (
+        <div key={i}>{el}</div>
+      ))}
+
+      <style>{`
+        @keyframes nodeIn { 0% {opacity:0; transform: translateY(8px); filter: blur(1px);} 100% {opacity:1; transform:none; filter:none;} }
+        @keyframes iconIn { 0% {opacity:0; transform: translateY(6px) scale(.96);} 100% {opacity:1; transform:none;} }
+        .animate-nodeIn { animation: nodeIn 520ms cubic-bezier(.2,.7,.2,1) both; }
+        .animate-iconIn { animation: iconIn 520ms cubic-bezier(.2,.7,.2,1) both; }
+        @keyframes pulseGlow { 0%,100% { opacity:.16 } 50% { opacity:.28 } }
+        .animate-pulseGlow { animation: pulseGlow 3.6s ease-in-out infinite; }
+      `}</style>
+    </div>
+  );
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
 }
