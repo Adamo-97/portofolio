@@ -1,12 +1,21 @@
+// components/skills/SkillCard.tsx
 "use client";
 
-import type { Skill } from "../../data/skills";
 import { CATEGORIES, type CategoryKey } from "./categories";
 import SkillIcon from "./SkillIcon";
 
+// Minimal shape used by this component
+export type UISkill = {
+  id: string;
+  name: string;
+  src: string;
+  xOffset?: number;
+  yOffset?: number;
+};
+
 type Props = {
   category: CategoryKey;
-  items: Skill[];
+  items: UISkill[];
   cardW: number;
   cardRatio: number; // width / height
   cardIndex: number;
@@ -24,13 +33,13 @@ export function SkillCard({
       className={[
         "relative rounded-2xl border bg-white/[0.06] border-white/10 backdrop-blur-[2px]",
         "grid overflow-hidden",
-        "animate-card", // <-- animate the card
+        "animate-card",
       ].join(" ")}
       style={{
         width: cardW,
         height: cardW / cardRatio,
         gridTemplateRows: "auto auto 1fr",
-        animationDelay: `${cardIndex * 120}ms`, // stagger cards
+        animationDelay: `${cardIndex * 120}ms`,
         animationFillMode: "both",
       }}
       aria-label={CATEGORIES[category].title}
@@ -68,10 +77,10 @@ export function SkillCard({
           {items.slice(0, 6).map((s, i) => (
             <div
               key={s.id}
-              className="grid min-h-0 overflow-hidden animate-icon" // <-- animate icon tiles
+              className="grid min-h-0 overflow-hidden animate-icon"
               style={{
                 gridTemplateRows: "minmax(0, 1fr) auto",
-                animationDelay: `${cardIndex * 120 + i * 70}ms`, // card + per-icon stagger
+                animationDelay: `${cardIndex * 120 + i * 70}ms`,
                 animationFillMode: "both",
               }}
               title={s.name}

@@ -1,7 +1,7 @@
+// components/skills/SkillsGrid.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { SKILLS, type Skill } from "../../data/skills";
 import { CATEGORIES, type CategoryKey } from "./categories";
 import { useViewportStage } from "./useViewportStage";
 import { SkillCard } from "./SkillCard";
@@ -19,9 +19,42 @@ const BASE = { cardW: 360, gap: 24, cardRatio: 4 / 3, padY: 40 };
 
 type Spec = { cols: number; rows: number };
 
+// Minimal skill shape used by our UI
+export type UISkill = {
+  id: string;
+  name: string;
+  category?: string | null;
+  src: string;
+  xOffset?: number;
+  yOffset?: number;
+  weight?: number;
+};
+
 export default function SkillsGrid() {
+  const [allSkills, setAllSkills] = useState<UISkill[]>([]);
+
+  // Fetch skills from the new API (Supabase-backed)
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/skills", { cache: "no-store" });
+        if (!r.ok) throw new Error(String(r.status));
+        const items: UISkill[] = await r.json();
+        if (!off) setAllSkills(items);
+      } catch (e) {
+        console.error("[SkillsGrid] fetch /api/skills failed:", e);
+        if (!off) setAllSkills([]); // graceful empty state
+      }
+    })();
+    return () => {
+      off = true;
+    };
+  }, []);
+
+  // Bucket by the six fixed categories that your UI already knows about
   const byCat = useMemo(() => {
-    const map: Record<CategoryKey, Skill[]> = {
+    const map: Record<CategoryKey, UISkill[]> = {
       Languages: [],
       Frontend: [],
       "Backend & Data": [],
@@ -29,14 +62,18 @@ export default function SkillsGrid() {
       "Design & IDEs": [],
       "QA & Workflow": [],
     };
-    for (const s of SKILLS) {
+
+    for (const s of allSkills) {
+      // Only place skills that match one of the six known categories
       if (s.category && (ORDER as string[]).includes(s.category)) {
         map[s.category as CategoryKey].push(s);
       }
     }
+
+    // Preserve your old per-card ordering logic (weight asc)
     ORDER.forEach((k) => map[k].sort((a, b) => (a.weight ?? 0) - (b.weight ?? 0)));
     return map;
-  }, []);
+  }, [allSkills]);
 
   const [spec, setSpec] = useState<Spec>({ cols: 2, rows: 3 });
   useEffect(() => {
@@ -75,7 +112,7 @@ export default function SkillsGrid() {
         </ul>
       </div>
 
-      {/* Animations */}
+      {/* Animations (unchanged) */}
       <style>{`
         @keyframes cardBounceFadeIn {
           0%   { opacity: 0; transform: translateY(22px) scale(0.965); filter: blur(2px); }

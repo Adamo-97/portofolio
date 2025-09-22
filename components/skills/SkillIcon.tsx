@@ -1,7 +1,14 @@
+// components/skills/SkillIcon.tsx
 "use client";
-import type { Skill } from "../../data/skills";
 
-export default function SkillIcon({ s }: { s: Skill }) {
+type UISkill = {
+  name: string;
+  src: string;
+  xOffset?: number;
+  yOffset?: number;
+};
+
+export default function SkillIcon({ s }: { s: UISkill }) {
   const tx = s.xOffset ?? 0;
   const ty = s.yOffset ?? 0;
 
@@ -14,7 +21,7 @@ export default function SkillIcon({ s }: { s: Skill }) {
         backgroundImage: `url(${s.src})`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: `calc(50% + ${tx}%) calc(50% + ${ty}%)`,
-        backgroundSize: "contain",     // <- always fits within both width & height
+        backgroundSize: "contain",
       }}
     />
   );
