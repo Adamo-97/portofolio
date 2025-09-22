@@ -21,21 +21,38 @@ export default function RoadmapPage() {
   }, []);
 
   return (
-    <div className="min-h-[100dvh] bg-black flex flex-col overflow-hidden">
+    // Fill viewport; flex column gives us “remaining space” under Header automatically.
+    <div className="bg-black flex flex-col overflow-hidden" style={{ minHeight: "100dvh" }}>
       <Header />
 
-      {/* Slide area = exactly the remaining space (no scroll) */}
-      <main className="flex-1 min-h-0 overflow-hidden px-[120px] mq750:px-[60px] mq450:px-5 grid place-items-center">
-        {/* Centered box that can shrink/grow inside the slide */}
+      {/* Slide area = remaining viewport (no scroll), centers child */}
+      <main
+        className="relative flex-1 min-h-0 overflow-hidden px-[120px] mq750:px-[60px] mq450:px-5 grid place-items-center"
+        // Stronger, larger, viewport-scaling blue “fog” baked into the background
+        // (multiple soft radial gradients from both bottom corners).
+        style={{
+          backgroundImage: `
+            radial-gradient(90% 85% at 12% 100%, rgba(125,211,252,0.40) 0%, rgba(125,211,252,0.22) 30%, rgba(125,211,252,0.10) 55%, rgba(0,0,0,0) 80%),
+            radial-gradient(90% 85% at 88% 100%, rgba(125,211,252,0.40) 0%, rgba(125,211,252,0.22) 30%, rgba(125,211,252,0.10) 55%, rgba(0,0,0,0) 80%),
+            radial-gradient(70% 65% at 18% 100%, rgba(125,211,252,0.22) 0%, rgba(125,211,252,0.12) 40%, rgba(0,0,0,0) 75%),
+            radial-gradient(70% 65% at 82% 100%, rgba(125,211,252,0.22) 0%, rgba(125,211,252,0.12) 40%, rgba(0,0,0,0) 75%),
+            linear-gradient(#000, #000)
+          `,
+          backgroundRepeat: "no-repeat, no-repeat, no-repeat, no-repeat, no-repeat",
+          // Bigger canvases = softer “blur” look; all in vw/vh so they breathe with the viewport.
+          backgroundSize: "100vw 85vh, 100vw 85vh, 80vw 65vh, 80vw 65vh, 100% 100%",
+          backgroundPosition: "left -18vw bottom -14vh, right -18vw bottom -14vh, left -8vw bottom -8vh, right -8vw bottom -8vh, center",
+        }}
+      >
+        {/* Centered content that can shrink/grow inside the slide (no vertical padding) */}
         <div className="w-full max-w-[1600px] max-h-full place-self-center">
-          {/* Let it size naturally; only CAP height so it never overflows the slide */}
           <StreetTimeline
             items={items}
             accentColor="#7dd3fc"
             laneHeight={460}
             iconSize={96}
             autoScale
-            // If supported, keep auto height + cap:
+            // Keep natural height; only cap so it never overflows the slide.
             // @ts-ignore
             style={{ width: "100%", height: "auto", maxHeight: "100%", overflow: "visible" }}
           />
