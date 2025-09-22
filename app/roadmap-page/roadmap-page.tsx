@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Header from "@/components/header";
 import StreetTimeline, { type RoadmapItem } from "@/components/roadmap/StreetTimeline";
 
-type ApiItem = { id: string; title: string; description: string; icon?: string; from: string; to?: string | null; };
+type ApiItem = { id: string; title: string; description: string; icon?: string; from: string; to?: string | null };
 
 export default function RoadmapPage() {
   const [items, setItems] = useState<RoadmapItem[]>([]);
@@ -15,26 +15,32 @@ export default function RoadmapPage() {
       const r = await fetch("/api/roadmap", { cache: "no-store" });
       if (!r.ok) throw new Error(String(r.status));
       const all: ApiItem[] = await r.json();
-      if (!off) setItems(all);
+      if (!off) setItems(all as any);
     })();
     return () => { off = true; };
   }, []);
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div className="min-h-[100dvh] bg-black flex flex-col overflow-hidden">
       <Header />
 
-      {/* SAME LEFT/RIGHT PADDING AS HEADER */}
-<main className="flex-1 py-10 px-[120px] mq750:px-[60px] mq450:px-5">
-  {/* Timeline self-centers via mx-auto now; no extra max-w needed */}
-  <StreetTimeline
-    items={items}
-    accentColor="#7dd3fc"
-    laneHeight={460}
-    iconSize={96}
-    autoScale
-  />
-</main>
+      {/* Slide area = exactly the remaining space (no scroll) */}
+      <main className="flex-1 min-h-0 overflow-hidden px-[120px] mq750:px-[60px] mq450:px-5 grid place-items-center">
+        {/* Centered box that can shrink/grow inside the slide */}
+        <div className="w-full max-w-[1600px] max-h-full place-self-center">
+          {/* Let it size naturally; only CAP height so it never overflows the slide */}
+          <StreetTimeline
+            items={items}
+            accentColor="#7dd3fc"
+            laneHeight={460}
+            iconSize={96}
+            autoScale
+            // If supported, keep auto height + cap:
+            // @ts-ignore
+            style={{ width: "100%", height: "auto", maxHeight: "100%", overflow: "visible" }}
+          />
+        </div>
+      </main>
     </div>
   );
 }
