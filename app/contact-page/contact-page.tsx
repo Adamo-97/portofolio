@@ -2,8 +2,8 @@
 import type { NextPage } from "next";
 import { useCallback } from "react";
 import Image from "next/image";
-import PhotoSocialContainer from "../../components/photo-social-container";
-import NameContainer from "../../components/name-container";
+import PhotoSocialContainer from "../../components/contact/photo-social-container";
+import NameContainer from "../../components/contact/name-container";
 import DowanloadCvButton from "../../components/home/download-cv-button";
 import Header from "../../components/header";
 
@@ -48,7 +48,7 @@ const ContactPage: NextPage = () => {
         </section>
         <div className="self-stretch flex flex-row items-center justify-between pt-0 px-0 pb-5 gap-0">
           <div className="w-[285px] relative tracking-[-0.5px] leading-[38px] flex items-center shrink-0">
-            © 2025 Adam, All Rights Reserved
+            © 2025 Adam Abdullah, All Rights Reserved
           </div>
           <Image
             className="w-7 relative max-h-full"
