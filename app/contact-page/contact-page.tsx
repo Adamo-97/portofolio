@@ -38,7 +38,6 @@ const ContactPage: NextPage = () => {
               </div>
             </div>
             <DowanloadCvButton
-              dowanloadCvButtonHeight="66px"
               downloadCV="Send Message"
               iconPlaceholder="/send-icon1.svg"
               iconPlaceholderWidth="24px"
