@@ -10,9 +10,9 @@ export type PhotoSocialContainerType = {
 
 const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
   className = "",
-  linkedinUrl = "#",
+  linkedinUrl = "https://www.linkedin.com/in/adam-abdullah97/",
   githubUrl = "https://github.com/Adamo-97",
-  youtubeUrl = "#",
+  youtubeUrl = "https://www.youtube.com/@TVV-Arabic",
 }) => {
   return (
     <section
@@ -32,7 +32,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
             height={660}
             sizes="100vw"
             alt=""
-            src="/card-container.svg"
+            src="/contact/card-container.svg"
           />
 
           {/* Photo crop window: 19,18 → 441,450 (422×432) */}
@@ -95,7 +95,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
             height={30}
             sizes="100vw"
             alt="LinkedIn"
-            src="/linkin-logo.svg"
+            src="/contact/linkedin-logo.svg"
           />
         </a>
 
@@ -113,7 +113,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
             height={30}
             sizes="100vw"
             alt="GitHub"
-            src="/github-logo.svg"
+            src="/contact/github-logo.svg"
           />
         </a>
 
@@ -131,7 +131,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
             height={30}
             sizes="100vw"
             alt="YouTube"
-            src="/yt-logo.svg"
+            src="/contact/yt-logo.svg"
           />
         </a>
       </div>

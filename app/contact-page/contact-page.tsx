@@ -2,11 +2,10 @@
 import type { NextPage } from "next";
 import { useCallback } from "react";
 import Image from "next/image";
-import PhotoSocialContainer from "../../components/contact/photo-social-container";
-import NameContainer from "../../components/contact/name-container";
-import DowanloadCvButton from "../../components/home/download-cv-button";
-import Header from "../../components/header";
-
+import PhotoSocialContainer from "@/components/contact/photo-social-container";
+import NameContainer from "@/components/contact/name-container";
+import Header from "@/components/header";
+import SendButton from "@/components/contact/SendButton";
 const ContactPage: NextPage = () => {
   return (
     <div className="w-full h-[900px] relative [background:linear-gradient(128deg,_rgba(0,_0,_0,_0),_rgba(24,_161,_253,_0.15)),_linear-gradient(74.23deg,_rgba(24,_161,_253,_0.05),_rgba(0,_0,_0,_0)),_#000] overflow-hidden flex flex-col items-start justify-start gap-[30px] min-w-[1000px] leading-[normal] tracking-[normal]">
@@ -37,12 +36,7 @@ const ContactPage: NextPage = () => {
                 />
               </div>
             </div>
-            <DowanloadCvButton
-              downloadCV="Send Message"
-              iconPlaceholder="/send-icon1.svg"
-              iconPlaceholderWidth="24px"
-              iconPlaceholderHeight="24px"
-            />
+            <SendButton iconSize={28} />
           </section>
         </section>
         <div className="self-stretch flex flex-row items-center justify-between pt-0 px-0 pb-5 gap-0">
