@@ -10,7 +10,7 @@ type Props = {
   color?: string;      // inner pill color
   gapPx?: number;      // space between outer stroke and inner pill
   ringPx?: number;     // outer stroke thickness
-  hoverScale?: number; // uniform scale for BOTH pills
+  hoverScale?: number; // kept for API compatibility (ignored now)
   sentMs?: number;     // Sent-state duration (ms)
   sendIconSrc?: string;
   sentIconSrc?: string;
@@ -30,7 +30,7 @@ function lighten(hex: string, amt = 0.26) {
 
 function MaskIcon({
   src,
-  size = 28,            
+  size = 28,
   className = "",
 }: {
   src: string;
@@ -67,7 +67,7 @@ export default function SendButton({
   color = "#18a1fd",
   gapPx = 12,
   ringPx = 2,
-  hoverScale = 1.08,
+  hoverScale = 1.08, // kept but ignored (no hover scale anymore)
   sentMs = 5000,
   sendIconSrc = "/contact/send-alt.svg",
   sentIconSrc = "/contact/check.svg",
@@ -81,11 +81,11 @@ export default function SendButton({
 
   useEffect(() => {
     return () => {
-        if (tRef.current) {
+      if (tRef.current) {
         clearTimeout(tRef.current);
-        }
+      }
     };
-    }, []);
+  }, []);
 
   const handleClick = () => {
     onClick?.();
@@ -108,16 +108,15 @@ export default function SendButton({
       {/* OUTER pill (stroke only, bigger via padding) */}
       <div
         aria-hidden
-        className="relative rounded-full transition-transform duration-300 ease-out group-hover:scale-[var(--scale)]"
+        className="relative rounded-full transition-transform duration-300 ease-out"
         style={
           {
             padding: gapPx,
-            ["--scale" as any]: String(hoverScale),
           } as React.CSSProperties
         }
       >
         <div
-          className="absolute inset-0 rounded-full pointer-events-none transition-all duration-300 ease-out group-hover:[box-shadow:0_10px_30px_rgba(var(--b-r),var(--b-g),var(--b-b),0.55)] group-hover:scale-[var(--scale)]"
+          className="absolute inset-0 rounded-full pointer-events-none transition-all duration-300 ease-out group-hover:[box-shadow:0_10px_30px_rgba(var(--b-r),var(--b-g),var(--b-b),0.55)]"
           style={{
             border: `${ringPx}px solid rgba(255,255,255,0.95)`,
             background: "transparent",
@@ -131,12 +130,11 @@ export default function SendButton({
           className={[
             "relative z-10 inline-flex items-center justify-center rounded-full",
             "px-7 py-2 text-white font-semibold text-base overflow-hidden",
-            "transition-transform duration-300 ease-out group-hover:scale-[var(--scale)]",
+            "transition-transform duration-300 ease-out",
             "focus:outline-none", // kill focus ring that looked like a second stroke
           ].join(" ")}
           style={{
             background: `linear-gradient(135deg, ${lighter} 0%, ${color} 60%)`,
-            ["--scale" as any]: String(hoverScale),
             // on hover, inner glow (no stroke)
             boxShadow: sent
               ? "none"
@@ -159,11 +157,11 @@ export default function SendButton({
                 src={sendIconSrc}
                 size={iconSize}
                 className={[
-                    "transition-transform duration-300 ease-out",
-                    // start neutral and slightly left…
-                    "-translate-x-1 opacity-90 rotate-0 [transform-origin:center]",
-                    // …then swing to 45° and slide in on hover
-                    "group-hover:translate-x-0 group-hover:opacity-100 group-hover:rotate-[45deg]",
+                  "transition-transform duration-300 ease-out",
+                  // start neutral and slightly left…
+                  "-translate-x-1 opacity-90 rotate-0 [transform-origin:center]",
+                  // …then swing to 45° and slide in on hover
+                  "group-hover:translate-x-0 group-hover:opacity-100 group-hover:rotate-[45deg]",
                 ].join(" ")}
               />
             ) : (

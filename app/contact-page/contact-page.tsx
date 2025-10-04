@@ -1,58 +1,46 @@
 "use client";
 import type { NextPage } from "next";
 import { useCallback } from "react";
-import Image from "next/image";
 import PhotoSocialContainer from "@/components/contact/photo-social-container";
-import NameContainer from "@/components/contact/name-container";
 import Header from "@/components/header";
-import SendButton from "@/components/contact/SendButton";
+import EmailForm from "@/components/contact/email-form";
+import Footer from "@/components/footer";
+import Stage16x9 from "@/components/Stage16x9";
+
 const ContactPage: NextPage = () => {
+  const handleSend = useCallback(() => {}, []);
+
   return (
-    <div className="w-full h-[900px] relative [background:linear-gradient(128deg,_rgba(0,_0,_0,_0),_rgba(24,_161,_253,_0.15)),_linear-gradient(74.23deg,_rgba(24,_161,_253,_0.05),_rgba(0,_0,_0,_0)),_#000] overflow-hidden flex flex-col items-start justify-start gap-[30px] min-w-[1000px] leading-[normal] tracking-[normal]">
+    <div className="w-full min-h-screen relative [background:linear-gradient(128deg,_rgba(0,_0,_0,_0),_rgba(24,_161,_253,_0.15)),_linear-gradient(74.23deg,_rgba(24,_161,_253,_0.05),_rgba(0,_0,_0,_0)),_#000] overflow-hidden flex flex-col">
       <Header />
-      <main className="self-stretch flex-1 overflow-hidden flex flex-col items-start justify-between py-0 px-[120px] box-border gap-0 max-w-full text-left text-base text-gray-100 font-urbanist mq450:pl-[60px] mq450:pr-[60px] mq450:box-border mq750:pl-5 mq750:pr-5 mq750:box-border">
-        <section className="self-stretch flex flex-row items-center justify-between gap-0 max-w-full mq825:flex-wrap">
-          <PhotoSocialContainer />
-          <section className="self-stretch flex flex-col items-start justify-center gap-6 max-w-full text-left text-lg text-white font-urbanist mq675:min-w-full mq825:flex-1">
-            <div className="flex flex-col items-start justify-start gap-6">
-              <div className="w-[600px] flex flex-row items-start justify-center gap-6">
-                <NameContainer
-                  titlePlaceholder="Your name"
-                  placeholder="Name"
-                />
-                <NameContainer
-                  titlePlaceholder="Your email"
-                  typeSectionBorder="1px solid rgba(0, 68, 130, 0.1)"
-                  placeholder="Email"
-                />
-              </div>
-              <div className="w-[600px] flex flex-col items-start justify-start gap-2.5">
-                <b className="relative">Your Message</b>
-                <textarea
-                  className="border-steelblue border-solid border-[1px] bg-darkslategray h-[280px] w-auto [outline:none] self-stretch shadow-[0px_4px_4px_rgba(0,_0,_0,_0.25)] rounded-2xl box-border flex flex-row items-start justify-start py-4 px-6 font-urbanist font-bold text-lg text-gray-200"
-                  placeholder="Message"
-                  rows={14}
-                  cols={30}
-                />
-              </div>
+
+      {/* Center the stage within the available viewport */}
+      <main className="flex-1 min-h-0 flex items-center justify-center px-4 sm:px-8 lg:px-12">
+        <div className="w-full h-[min(78svh,calc(100svh-120px))] min-h-0 min-w-0">
+          <Stage16x9
+            baseW={1400}
+            baseH={788}
+            className="w-full h-full overflow-hidden"
+          >
+            <div className="w-full h-full p-10">
+              {/* Make columns fill the full stage height */}
+              <section className="grid h-full grid-cols-12 gap-8 items-stretch">
+                {/* Left: photo — fill height and center */}
+                <div className="col-span-12 lg:col-span-5 h-full grid place-items-center">
+                  <PhotoSocialContainer className="w-full h-full" />
+                </div>
+
+                {/* Right: form — fill height and center */}
+                <div className="col-span-12 lg:col-span-7 h-full grid place-items-center">
+                  <EmailForm onSend={handleSend} className="w-full h-full" />
+                </div>
+              </section>
             </div>
-            <SendButton iconSize={28} />
-          </section>
-        </section>
-        <div className="self-stretch flex flex-row items-center justify-between pt-0 px-0 pb-5 gap-0">
-          <div className="w-[285px] relative tracking-[-0.5px] leading-[38px] flex items-center shrink-0">
-            © 2025 Adam Abdullah, All Rights Reserved
-          </div>
-          <Image
-            className="w-7 relative max-h-full"
-            width={28}
-            height={30}
-            sizes="100vw"
-            alt=""
-            src="/logo1.svg"
-          />
+          </Stage16x9>
         </div>
       </main>
+
+      <Footer year={2025} owner="Adam Abdullah" logoSrc="/logo1.svg" />
     </div>
   );
 };
