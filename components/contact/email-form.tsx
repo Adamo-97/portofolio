@@ -3,16 +3,14 @@ import type { NextPage } from "next";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import NameContainer from "@/components/contact/name-container";
 import SendButton from "@/components/contact/SendButton";
-
-const NAME_MAX = 80;
-const EMAIL_MAX = 254;
-const MESSAGE_MAX = 1000;
+import { isValidEmail, NAME_MAX, EMAIL_MAX, MESSAGE_MAX } from "@/lib/contact/validate";
 
 type Props = {
   className?: string;
-  onSend?: (payload: { name: string; email: string; message: string; files: File[] }) => void;
+  // onSend should resolve to true only on real success (HTTP 200 + { ok:true })
+  onSend?: (payload: { name: string; email: string; message: string; files: File[] }) => Promise<boolean> | boolean;
   maxTotalMb?: number; // default 10
-  showMobileIcons?: boolean; // will render icon ribbon next to Send on mobile
+  showMobileIcons?: boolean; // render icon ribbon next to Send on mobile
 };
 
 type LinkItem = { id: number; title: string; href: string; svgPath: string; viewBox?: string };
@@ -29,6 +27,7 @@ const EmailForm: NextPage<Props> = ({
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [links, setLinks] = useState<LinkItem[]>([]);
+  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle"); // drives button
 
   const inputFileRef = useRef<HTMLInputElement | null>(null);
 
@@ -61,6 +60,11 @@ const EmailForm: NextPage<Props> = ({
     return v.slice(0, head) + "…" + v.slice(-tail);
   };
 
+  // Let spaces type normally even if a global key handler exists (don’t prevent default!)
+  const stopSpaceBubble = (e: React.KeyboardEvent) => {
+    if (e.key === " " || e.code === "Space" || (e as any).keyCode === 32) e.stopPropagation();
+  };
+
   function handleFilesChange(flist: FileList | null) {
     setError(null);
     if (!flist) return;
@@ -86,7 +90,7 @@ const EmailForm: NextPage<Props> = ({
     setFiles(deduped);
   }
 
-  function handleSendClick() {
+  async function handleSendClick() {
     setError(null);
     if (!name.trim() || !email.trim() || !message.trim()) {
       setError("Please fill in Name, Email, and Message.");
@@ -96,7 +100,31 @@ const EmailForm: NextPage<Props> = ({
       setError(`Attachments exceed ${maxTotalMb} MB (selected ${(totalBytes / (1024 * 1024)).toFixed(1)} MB).`);
       return;
     }
-    onSend?.({ name, email, message, files });
+    if (!isValidEmail(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setStatus("sending");
+    try {
+      const ok = (await onSend?.({ name, email, message, files })) ?? false;
+      if (ok) {
+        setStatus("sent");
+        // Clear on success
+        setName("");
+        setEmail("");
+        setMessage("");
+        setFiles([]);
+        // Briefly show "Sent", then go back to idle
+        setTimeout(() => setStatus("idle"), 1500);
+      } else {
+        setStatus("idle");
+        setError("Failed to send. Please try again.");
+      }
+    } catch {
+      setStatus("idle");
+      setError("Failed to send. Please try again.");
+    }
   }
 
   const fileKey = (f: File) => `${f.name}__${f.size}__${f.lastModified}`;
@@ -118,7 +146,7 @@ const EmailForm: NextPage<Props> = ({
       ].join(" ")}
     >
       <div className="flex flex-col items-start justify-start gap-5 w-full max-w-[520px] sm:max-w-[640px]">
-        {/* Name + Email: same row on phones (2 cols) */}
+        {/* Name + Email */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full">
           <NameContainer
             id="contact-name"
@@ -126,11 +154,12 @@ const EmailForm: NextPage<Props> = ({
             placeholder="Name"
             required
             valueForRequired={name}
-            size="sm" // smaller box, same font
+            size="sm"
             inputProps={{
               value: name,
               onChange: (e) => setName(e.currentTarget.value.slice(0, NAME_MAX)),
               maxLength: NAME_MAX,
+              onKeyDown: stopSpaceBubble, // allow spaces
             }}
           />
           <NameContainer
@@ -140,7 +169,7 @@ const EmailForm: NextPage<Props> = ({
             placeholder="Email"
             required
             valueForRequired={email}
-            size="sm" // smaller box, same font
+            size="sm"
             inputProps={{
               type: "email",
               value: email,
@@ -148,6 +177,7 @@ const EmailForm: NextPage<Props> = ({
               maxLength: EMAIL_MAX,
               inputMode: "email",
               autoComplete: "email",
+              onKeyDown: stopSpaceBubble, // harmless for email, prevents global traps
             }}
           />
         </div>
@@ -175,6 +205,7 @@ const EmailForm: NextPage<Props> = ({
               value={message}
               maxLength={MESSAGE_MAX}
               onChange={(e) => setMessage(e.currentTarget.value.slice(0, MESSAGE_MAX))}
+              onKeyDown={stopSpaceBubble} // allow spaces and prevent global handlers
             />
 
             <div className="flex flex-col gap-2 px-4 pb-4">
@@ -189,7 +220,7 @@ const EmailForm: NextPage<Props> = ({
                     <svg
                       aria-hidden
                       viewBox="0 0 24 24"
-                      className="w-4 h-4 text-gray-2 00 opacity-90"
+                      className="w-4 h-4 text-gray-200 opacity-90"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -277,12 +308,12 @@ const EmailForm: NextPage<Props> = ({
         </div>
       </div>
 
-      {/* Bottom row: Send + mobile icon ribbon (any count, as-is rendering) */}
+      {/* Bottom row: Send + mobile icon ribbon */}
       <div className="w-full max-w-[520px] sm:max-w-[640px]">
         <div className="mt-5 flex items-center justify-between gap-3">
-          {/* Smaller send button without changing its internal styles */}
           <div className="scale-[0.9] origin-left">
-            <SendButton iconSize={20} onClick={handleSendClick} />
+            {/* Button visuals driven by status; sends only when clicked */}
+            <SendButton iconSize={20} onClick={handleSendClick} status={status} />
           </div>
 
           {showMobileIcons && links.length > 0 && (

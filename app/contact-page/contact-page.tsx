@@ -12,9 +12,24 @@ import PhotoSocialContainer from "@/components/contact/photo-social-container";
 import EmailForm from "@/components/contact/email-form";
 
 const ContactPage: NextPage = () => {
-  const handleSend = useCallback(() => {}, []);
-  const prefersReducedMotion = useReducedMotion();
+  const handleSend = useCallback(async ({ name, email, message, files }: {
+    name: string; email: string; message: string; files: File[];
+  }) => {
+    const fd = new FormData();
+    fd.append("name", name);
+    fd.append("email", email);
+    fd.append("message", message);
+    for (const f of files) fd.append("files", f, f.name);
 
+    try {
+      const res = await fetch("/api/contact/send", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      return Boolean(res.ok && data?.ok); // <-- return success boolean
+    } catch {
+      return false;
+    }
+  }, []);
+  const prefersReducedMotion = useReducedMotion();
   const springy: Transition = { type: "spring", stiffness: 260, damping: 26, mass: 0.9 };
   const parent: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.15, delayChildren: 0.05 } } };
   const leftCol: Variants = {
@@ -30,7 +45,7 @@ const ContactPage: NextPage = () => {
     <div className="w-full min-h-screen relative [background:linear-gradient(128deg,_rgba(0,_0,_0,_0),_rgba(24,_161,_253,_0.15)),_linear-gradient(74.23deg,_rgba(24,_161,_253,_0.05),_rgba(0,_0,_0,_0)),_#000] overflow-hidden flex flex-col">
       <Header />
 
-      <main className="flex-1 min-h-0 px-4 sm:px-6">
+      <main className="flex-1 min-h-0 px-4 sm:px-6 lg:grid lg:place-items-center">
         {/* Mobile block */}
         <div className="lg:hidden py-6 grid place-items-center">
           <div className="w-full">
@@ -43,8 +58,8 @@ const ContactPage: NextPage = () => {
         </div>
 
         {/* DESKTOP/TABLET */}
-        <div className="hidden lg:flex min-h-0 items-center justify-center px-4 lg:px-12">
-          <div className="w-full h-[min(78svh,calc(100svh-120px))] min-h-0 min-w-0">
+        <div className="hidden lg:flex h-full w-full items-center justify-center px-4 lg:px-12">
+          <div className="w-full h-full min-h-[560px] min-w-0">
             <Stage16x9 baseW={1400} baseH={788} className="w-full h-full overflow-visible">
               <div className="w-full h-full p-8 lg:p-10">
                 <motion.section
@@ -58,7 +73,14 @@ const ContactPage: NextPage = () => {
                     variants={leftCol}
                     className="col-span-12 lg:col-span-5 2xl:col-span-5 h-full grid place-items-center overflow-visible z-10"
                   >
-                    <PhotoSocialContainer className="w-full h-full max-w-none" />
+                    <PhotoSocialContainer     
+                      className="
+                          w-full h-full max-w-none
+                          transform-gpu origin-center
+                          scale-[0.92] xl:scale-100 2xl:scale-100
+                          transition-transform
+                        "
+                      />
                   </motion.div>
 
                 {/* Right: form — 80% of column (photo stays 100%) */}

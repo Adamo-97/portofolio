@@ -5,33 +5,31 @@ import React, { useEffect, useRef, useState } from "react";
 
 export type PhotoSocialContainerType = {
   className?: string;
-
-  // Optional fallbacks (used only if API returns nothing)
-  linkedinUrl?: string;
-  githubUrl?: string;
-  youtubeUrl?: string;
 };
 
 type LinkItem = {
   id: number;
   title: string;
   href: string;
-  svgPath: string;     // can be a URL or a raw <path d="..."> or full <svg> markup
-  viewBox?: string;    // e.g. "0 0 24 24"
+  svgPath: string;   // URL, data: URL, raw <path d="...">, or full <svg> markup
+  viewBox?: string;  // e.g. "0 0 24 24"
 };
 
 const BASE_W = 460;
 const BASE_H = 660;
 
-const looksLikeUrl = (v: string) => /^https?:\/\//i.test(v) || /\.svg(\?|#|$)/i.test(v);
-const looksLikePathD = (v: string) => /^[MmZzLlHhVvCcSsQqTtAa][\d\s,.\-+eE]+/.test(v);
+// Accept http(s), .svg paths, and data URLs (svg/png/jpeg/webp)
+const looksLikeUrl = (v: string) =>
+  /^https?:\/\//i.test(v) ||
+  /\.svg(\?|#|$)/i.test(v) ||
+  /^data:image\/(?:svg\+xml|png|jpeg|webp);/i.test(v);
+
+// Raw path data like "M10 10L..." etc.
+const looksLikePathD = (v: string) =>
+  /^[MmZzLlHhVvCcSsQqTtAa][\d\s,.\-+eE]+/.test(v);
 
 const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
   className = "",
-  // fallbacks if API is empty/unavailable
-  linkedinUrl = "https://www.linkedin.com/in/adam-abdullah97/",
-  githubUrl   = "https://github.com/Adamo-97",
-  youtubeUrl  = "https://www.youtube.com/@TVV-Arabic",
 }) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
@@ -50,7 +48,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
     return () => ro.disconnect();
   }, []);
 
-  // fetch socials from the same API used by the form
+  // fetch socials (logos come ONLY from API now)
   useEffect(() => {
     let off = false;
     (async () => {
@@ -67,15 +65,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
       off = true;
     };
   }, []);
-
-  // Fallback to your three hardcoded links if API has nothing
-  const fallback = [
-    { id: 1, title: "LinkedIn", href: linkedinUrl, svgPath: "/contact/linkedin-logo.svg", viewBox: "0 0 24 24" },
-    { id: 2, title: "GitHub",   href: githubUrl,   svgPath: "/contact/github-logo.svg",   viewBox: "0 0 24 24" },
-    { id: 3, title: "YouTube",  href: youtubeUrl,  svgPath: "/contact/yt-logo.svg",       viewBox: "0 0 24 24" },
-  ];
-
-  const items = links.length > 0 ? links : fallback;
 
   return (
     <section
@@ -101,7 +90,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
         >
           <div className="absolute inset-0">
             <div className="relative w-[460px] h-[660px] overflow-hidden">
-              {/* Frame */}
+              {/* Frame (static) */}
               <Image
                 className="absolute inset-0 z-[2] pointer-events-none"
                 width={460}
@@ -111,7 +100,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                 src="/contact/card-container.svg"
               />
 
-              {/* Photo crop window */}
+              {/* Photo crop window (static) */}
               <div
                 className="absolute z-[1] overflow-hidden w-[422px] h-[432px]"
                 style={{ left: 19, top: 18 }}
@@ -149,61 +138,63 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                 </div>
               </div>
 
-              {/* Socials (from /api/contact) */}
-              <div className="absolute z-[3] left-0 right-0 bottom-3">
-                <div className="w-full flex items-center justify-center flex-wrap content-center gap-[30px]">
-                  {items.map((l) => {
-                    const v = (l.svgPath || "").trim();
-                    const vb = l.viewBox ?? "0 0 24 24";
-                    return (
-                      <a
-                        key={l.id}
-                        href={l.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={l.title}
-                        title={l.title}
-                        className="inline-flex items-center justify-center"
-                      >
-                        {/* Render SVG exactly as provided (no recolor) */}
-                        {looksLikeUrl(v) ? (
-                          // URL to an SVG file
-                          <img
-                            src={v}
-                            alt=""
-                            className="h-[30px] w-auto select-none pointer-events-none"
-                            decoding="async"
-                            loading="lazy"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : v.startsWith("<svg") ? (
-                          // Full inline SVG markup
-                          <span
-                            className="h-[30px] inline-block"
-                            style={{ width: "auto" }}
-                            aria-hidden="true"
-                            // eslint-disable-next-line react/no-danger
-                            dangerouslySetInnerHTML={{ __html: v }}
-                          />
-                        ) : looksLikePathD(v) ? (
-                          // Raw 'd' path string
-                          <svg
-                            viewBox={vb}
-                            className="h-[30px] w-auto"
-                            preserveAspectRatio="xMidYMid meet"
-                            aria-hidden="true"
-                          >
-                            <path d={v} />
-                          </svg>
-                        ) : (
-                          // Unknown format → nothing
-                          <span className="h-[30px] w-[30px]" aria-hidden="true" />
-                        )}
-                      </a>
-                    );
-                  })}
+              {/* Socials — render ONLY if API returned items */}
+              {links.length > 0 && (
+                <div className="absolute z-[3] left-0 right-0 bottom-3">
+                  <div className="w-full flex items-center justify-center flex-wrap content-center gap-[30px]">
+                    {links.map((l) => {
+                      const v = (l.svgPath || "").trim();
+                      const vb = l.viewBox ?? "0 0 24 24";
+                      return (
+                        <a
+                          key={l.id}
+                          href={l.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={l.title}
+                          title={l.title}
+                          className="inline-flex items-center justify-center"
+                        >
+                          {/* Render SVG exactly as provided (no recolor) */}
+                          {looksLikeUrl(v) ? (
+                            // URL or data: URL
+                            <img
+                              src={v}
+                              alt=""
+                              className="h-[30px] w-auto select-none pointer-events-none"
+                              decoding="async"
+                              loading="lazy"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : v.startsWith("<svg") ? (
+                            // full inline SVG markup
+                            <span
+                              className="h-[30px] inline-block"
+                              style={{ width: "auto" }}
+                              aria-hidden="true"
+                              // eslint-disable-next-line react/no-danger
+                              dangerouslySetInnerHTML={{ __html: v }}
+                            />
+                          ) : looksLikePathD(v) ? (
+                            // raw path data
+                            <svg
+                              viewBox={vb}
+                              className="h-[30px] w-auto"
+                              preserveAspectRatio="xMidYMid meet"
+                              aria-hidden="true"
+                            >
+                              <path d={v} />
+                            </svg>
+                          ) : (
+                            // unknown format → nothing
+                            <span className="h-[30px] w-[30px]" aria-hidden="true" />
+                          )}
+                        </a>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
           {/* END canvas */}
