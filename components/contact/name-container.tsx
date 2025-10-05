@@ -11,6 +11,7 @@ type Props = {
   id?: string;
   required?: boolean;
   valueForRequired?: string; // controls the required icon visibility
+  size?: "sm" | "md" | "lg"; // NEW: sizing without changing font
 };
 
 const NameContainer: NextPage<Props> = ({
@@ -22,8 +23,18 @@ const NameContainer: NextPage<Props> = ({
   id,
   required = false,
   valueForRequired = "",
+  size = "md",
 }) => {
   const showReq = required && !valueForRequired.trim();
+
+  // Only height & padding change; font stays the same as before.
+  const sizeCls =
+    size === "sm"
+      ? "h-10 rounded-xl px-4"
+      : size === "lg"
+      ? "h-14 rounded-2xl px-7"
+      : "h-12 rounded-2xl px-6";
+
   return (
     <div className={["flex flex-col gap-2 w-full", className].join(" ")}>
       {!!titlePlaceholder && (
@@ -45,14 +56,16 @@ const NameContainer: NextPage<Props> = ({
           )}
         </label>
       )}
+
       <input
         id={id}
         {...inputProps}
         required={required}
         className={[
           "border-steelblue border-solid border-[1px] bg-darkslategray",
-          "h-12 w-full [outline:none] shadow-[0_4px_4px_rgba(0,0,0,0.25)]",
-          "rounded-2xl px-6 font-urbanist font-bold text-lg text-gray-200",
+          "w-full [outline:none] shadow-[0_4px_4px_rgba(0,0,0,0.25)]",
+          "font-urbanist font-bold text-lg text-gray-200", // ← keep your font & size
+          sizeCls, // ← only affects height/padding/radius
           inputProps?.className || "",
         ].join(" ")}
         placeholder={placeholder}

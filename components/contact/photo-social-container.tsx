@@ -5,23 +5,39 @@ import React, { useEffect, useRef, useState } from "react";
 
 export type PhotoSocialContainerType = {
   className?: string;
+
+  // Optional fallbacks (used only if API returns nothing)
   linkedinUrl?: string;
   githubUrl?: string;
   youtubeUrl?: string;
 };
 
+type LinkItem = {
+  id: number;
+  title: string;
+  href: string;
+  svgPath: string;     // can be a URL or a raw <path d="..."> or full <svg> markup
+  viewBox?: string;    // e.g. "0 0 24 24"
+};
+
 const BASE_W = 460;
 const BASE_H = 660;
 
+const looksLikeUrl = (v: string) => /^https?:\/\//i.test(v) || /\.svg(\?|#|$)/i.test(v);
+const looksLikePathD = (v: string) => /^[MmZzLlHhVvCcSsQqTtAa][\d\s,.\-+eE]+/.test(v);
+
 const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
   className = "",
+  // fallbacks if API is empty/unavailable
   linkedinUrl = "https://www.linkedin.com/in/adam-abdullah97/",
-  githubUrl = "https://github.com/Adamo-97",
-  youtubeUrl = "https://www.youtube.com/@TVV-Arabic",
+  githubUrl   = "https://github.com/Adamo-97",
+  youtubeUrl  = "https://www.youtube.com/@TVV-Arabic",
 }) => {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
+  const [links, setLinks] = useState<LinkItem[]>([]);
 
+  // scale to fit container
   useEffect(() => {
     const node = hostRef.current;
     if (!node) return;
@@ -34,10 +50,36 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
     return () => ro.disconnect();
   }, []);
 
+  // fetch socials from the same API used by the form
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/contact", { cache: "no-store" });
+        if (!r.ok) return;
+        const data = (await r.json()) as LinkItem[];
+        if (!off && Array.isArray(data)) setLinks(data);
+      } catch {
+        /* silent */
+      }
+    })();
+    return () => {
+      off = true;
+    };
+  }, []);
+
+  // Fallback to your three hardcoded links if API has nothing
+  const fallback = [
+    { id: 1, title: "LinkedIn", href: linkedinUrl, svgPath: "/contact/linkedin-logo.svg", viewBox: "0 0 24 24" },
+    { id: 2, title: "GitHub",   href: githubUrl,   svgPath: "/contact/github-logo.svg",   viewBox: "0 0 24 24" },
+    { id: 3, title: "YouTube",  href: youtubeUrl,  svgPath: "/contact/yt-logo.svg",       viewBox: "0 0 24 24" },
+  ];
+
+  const items = links.length > 0 ? links : fallback;
+
   return (
     <section
       className={[
-        // keep your container vibe; no fixed height so it can scale
         "overflow-hidden flex flex-col items-center justify-center",
         "pt-0 px-[22px] pb-[30px] box-border relative gap-5 max-w-full",
         "text-left text-xl text-black font-urbanist",
@@ -45,22 +87,21 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
         className,
       ].join(" ")}
     >
-      {/* The slot that defines available size */}
+      {/* Available space host (drives scale) */}
       <div ref={hostRef} className="relative w-full h-full flex items-center justify-center">
-        {/* Scaled canvas: treat the whole card as one unit */}
+        {/* Scaled canvas */}
         <div
           className="relative"
           style={{
             width: BASE_W,
             height: BASE_H,
             transform: `scale(${scale})`,
-            transformOrigin: "center", // stays centered in its grid cell
+            transformOrigin: "center",
           }}
         >
-          {/* Frame + contents live inside this base-size canvas */}
           <div className="absolute inset-0">
             <div className="relative w-[460px] h-[660px] overflow-hidden">
-              {/* Frame on top */}
+              {/* Frame */}
               <Image
                 className="absolute inset-0 z-[2] pointer-events-none"
                 width={460}
@@ -88,7 +129,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                 </div>
               </div>
 
-              {/* Text block (unchanged) */}
+              {/* Text block */}
               <div
                 className="absolute z-[3] text-left"
                 style={{ left: 19, right: 19, top: 450, paddingTop: 14 }}
@@ -108,65 +149,59 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                 </div>
               </div>
 
-              {/* Socials: now INSIDE the card, pinned at the bottom */}
-              <div
-                className="absolute z-[3] left-0 right-0 bottom-3"
-                // match your spacing; tweak bottom if you need a nudge
-              >
+              {/* Socials (from /api/contact) */}
+              <div className="absolute z-[3] left-0 right-0 bottom-3">
                 <div className="w-full flex items-center justify-center flex-wrap content-center gap-[30px]">
-                  <a
-                    href={linkedinUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="LinkedIn"
-                    className="inline-flex"
-                  >
-                    <Image
-                      className="w-[30px] relative rounded-[5px] max-h-full"
-                      loading="lazy"
-                      width={30}
-                      height={30}
-                      sizes="100vw"
-                      alt="LinkedIn"
-                      src="/contact/linkedin-logo.svg"
-                    />
-                  </a>
-
-                  <a
-                    href={githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="GitHub"
-                    className="inline-flex"
-                  >
-                    <Image
-                      className="w-[31px] relative max-h-full"
-                      loading="lazy"
-                      width={31}
-                      height={30}
-                      sizes="100vw"
-                      alt="GitHub"
-                      src="/contact/github-logo.svg"
-                    />
-                  </a>
-
-                  <a
-                    href={youtubeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="YouTube"
-                    className="inline-flex"
-                  >
-                    <Image
-                      className="w-[43px] relative max-h-full"
-                      loading="lazy"
-                      width={43}
-                      height={30}
-                      sizes="100vw"
-                      alt="YouTube"
-                      src="/contact/yt-logo.svg"
-                    />
-                  </a>
+                  {items.map((l) => {
+                    const v = (l.svgPath || "").trim();
+                    const vb = l.viewBox ?? "0 0 24 24";
+                    return (
+                      <a
+                        key={l.id}
+                        href={l.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={l.title}
+                        title={l.title}
+                        className="inline-flex items-center justify-center"
+                      >
+                        {/* Render SVG exactly as provided (no recolor) */}
+                        {looksLikeUrl(v) ? (
+                          // URL to an SVG file
+                          <img
+                            src={v}
+                            alt=""
+                            className="h-[30px] w-auto select-none pointer-events-none"
+                            decoding="async"
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : v.startsWith("<svg") ? (
+                          // Full inline SVG markup
+                          <span
+                            className="h-[30px] inline-block"
+                            style={{ width: "auto" }}
+                            aria-hidden="true"
+                            // eslint-disable-next-line react/no-danger
+                            dangerouslySetInnerHTML={{ __html: v }}
+                          />
+                        ) : looksLikePathD(v) ? (
+                          // Raw 'd' path string
+                          <svg
+                            viewBox={vb}
+                            className="h-[30px] w-auto"
+                            preserveAspectRatio="xMidYMid meet"
+                            aria-hidden="true"
+                          >
+                            <path d={v} />
+                          </svg>
+                        ) : (
+                          // Unknown format → nothing
+                          <span className="h-[30px] w-[30px]" aria-hidden="true" />
+                        )}
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             </div>

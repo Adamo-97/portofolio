@@ -1,6 +1,5 @@
-import Header from "../../components/header";
-import SkillsGrid from "../../components/skills/SkillsGrid";
-
+import Header from "@/components/header";
+import SkillsGrid from "@/components/skills/SkillsGrid";
 
 export default function Page() {
   return (

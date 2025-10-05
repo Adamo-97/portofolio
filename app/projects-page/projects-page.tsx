@@ -2,7 +2,7 @@
 import type { NextPage } from "next";
 import { useCallback } from "react";
 import Image from "next/image";
-import Header from "../../components/header";
+import Header from "@/components/header";
 
 const ProjectsPage: NextPage = () => {
   return (
