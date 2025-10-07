@@ -10,10 +10,67 @@ type Props = {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
   id?: string;
   required?: boolean;
-  valueForRequired?: string; // controls the required icon visibility
-  size?: "sm" | "md" | "lg"; // NEW: sizing without changing font
+  valueForRequired?: string; 
+  size?: "sm" | "md" | "lg"; 
 };
 
+/**
+ * Responsive labeled input container component.
+ *
+ * Renders an optional bold label (driven by `titlePlaceholder`) and an <input/>
+ * element with consistent sizing, styling, and conditional required indicator.
+ *
+ * A subtle "info" style icon appears next to the label when `required` is true
+ * but the current `valueForRequired` is empty/whitespace, signaling to the user
+ * that the field still needs attention. This visual indicator is purely
+ * informational; HTML required validation is handled via the `required` prop.
+ *
+ * Sizing:
+ * - size="sm" => compact height, smaller horizontal padding
+ * - size="md" (default) => standard height/padding
+ * - size="lg" => taller field with increased padding
+ *
+ * Border customization:
+ * - `typeSectionBorder` can override the default border via inline style (e.g. "1px solid #fff").
+ *
+ * Styling strategy:
+ * - Utility classes are composed dynamically (Tailwind-style)
+ * - External consumers can extend/override input styling through `inputProps.className`
+ * - Root wrapper also accepts a `className` for layout control
+ *
+ * Accessibility:
+ * - The label is associated with the input through `htmlFor` / `id`
+ * - The required indicator SVG is marked as aria-hidden to avoid redundancy
+ *
+ * Performance / safety:
+ * - Defensive optional chaining is used for `inputProps?.className`
+ *
+ * Props:
+ * @prop className Optional class names applied to the outer wrapper container.
+ * @prop titlePlaceholder Optional text displayed as the field label (bold). If empty, no label is rendered.
+ * @prop placeholder Placeholder text passed to the underlying input element.
+ * @prop typeSectionBorder Optional CSS border value applied inline to the input (e.g. "2px dashed #888").
+ * @prop inputProps Additional standard input props (e.g. onChange, value, type, name). `className` within this merges with internal styles.
+ * @prop id The id used for input and label association. Recommended when `titlePlaceholder` is provided.
+ * @prop required If true, sets the input as required and enables the conditional required state indicator.
+ * @prop valueForRequired The current external value used to determine whether to show the required indicator (typically mirrors inputProps.value).
+ * @prop size Visual size variant: "sm" | "md" | "lg". Defaults to "md".
+ *
+ * Internal logic:
+ * @constant showReq True when the field is marked required and `valueForRequired` is empty/whitespace.
+ * @constant sizeCls Computed Tailwind-like class string for sizing and rounding.
+ *
+ * Usage example:
+ * <NameContainer
+ *   id="fullName"
+ *   titlePlaceholder="Full Name"
+ *   placeholder="Enter your full name"
+ *   required
+ *   valueForRequired={formValues.fullName}
+ *   inputProps={{ value: formValues.fullName, onChange: handleChange }}
+ *   size="lg"
+ * />
+ */
 const NameContainer: NextPage<Props> = ({
   className = "",
   titlePlaceholder = "",
@@ -27,7 +84,6 @@ const NameContainer: NextPage<Props> = ({
 }) => {
   const showReq = required && !valueForRequired.trim();
 
-  // Only height & padding change; font stays the same as before.
   const sizeCls =
     size === "sm"
       ? "h-10 rounded-xl px-4"
@@ -64,8 +120,8 @@ const NameContainer: NextPage<Props> = ({
         className={[
           "border-steelblue border-solid border-[1px] bg-darkslategray",
           "w-full [outline:none] shadow-[0_4px_4px_rgba(0,0,0,0.25)]",
-          "font-urbanist font-bold text-lg text-gray-200", // ← keep your font & size
-          sizeCls, // ← only affects height/padding/radius
+          "font-urbanist font-bold text-lg text-gray-200", 
+          sizeCls, 
           inputProps?.className || "",
         ].join(" ")}
         placeholder={placeholder}

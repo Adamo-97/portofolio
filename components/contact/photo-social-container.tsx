@@ -11,23 +11,90 @@ type LinkItem = {
   id: number;
   title: string;
   href: string;
-  svgPath: string;   // URL, data: URL, raw <path d="...">, or full <svg> markup
-  viewBox?: string;  // e.g. "0 0 24 24"
+  svgPath: string;  
+  viewBox?: string; 
 };
 
 const BASE_W = 460;
 const BASE_H = 660;
 
-// Accept http(s), .svg paths, and data URLs (svg/png/jpeg/webp)
 const looksLikeUrl = (v: string) =>
   /^https?:\/\//i.test(v) ||
   /\.svg(\?|#|$)/i.test(v) ||
   /^data:image\/(?:svg\+xml|png|jpeg|webp);/i.test(v);
 
-// Raw path data like "M10 10L..." etc.
 const looksLikePathD = (v: string) =>
   /^[MmZzLlHhVvCcSsQqTtAa][\d\s,.\-+eE]+/.test(v);
 
+/**
+ * Renders a responsive, card–style contact/photo panel with a personal message
+ * and dynamically loaded social / external links.
+ *
+ * Core Features:
+ * 1. Responsive Uniform Scaling:
+ *    - Uses a ResizeObserver on the host container to compute a uniform scale factor.
+ *    - Scales an absolutely positioned fixed–dimension design (BASE_W x BASE_H) while preserving aspect ratio.
+ *    - Ensures internal layout fidelity independent of parent container size.
+ *
+ * 2. Dynamic Link Fetching:
+ *    - Fetches an array of LinkItem objects from /api/contact (no-store to avoid caching).
+ *    - Aborts state updates on unmount via an "off" flag pattern to prevent memory leaks / React warnings.
+ *
+ * 3. Flexible Icon Rendering Strategy:
+ *    - For each link item (LinkItem):
+ *        a. If svgPath looks like a direct URL (http(s) or data URI) → render <img>.
+ *        b. If svgPath begins with raw "<svg" markup → inject via dangerouslySetInnerHTML (trusted content required).
+ *        c. If svgPath appears to be a valid SVG path "d" attribute → wrap in a generated <svg>.
+ *        d. Fallback: empty sized placeholder span to maintain layout consistency.
+ *    - Supports optional custom viewBox per link (default "0 0 24 24").
+ *
+ * 4. Accessibility & Semantics:
+ *    - External links open in a new tab with rel="noopener noreferrer" for security.
+ *    - Each anchor includes aria-label and title derived from link metadata.
+ *    - Decorative / non-informational images use empty alt ("") to avoid redundant screen reader chatter.
+ *    - Inline SVGs are marked aria-hidden when purely presentational.
+ *
+ * 5. Layered Visual Composition:
+ *    - Background card illustration (static SVG).
+ *    - Photo region with contained image (object-fit: contain; anchored top).
+ *    - Text block with hashtag headline, description, and secondary prompt.
+ *    - Social icon bar pinned to the bottom area of the card.
+ *
+ * 6. Performance Considerations:
+ *    - Lazy loading for images (where applicable) to defer off-screen resource usage.
+ *    - Minimal re-renders: scale updates only on container resize; links only once after fetch.
+ *
+ * 7. Styling & Layout:
+ *    - Tailwind utility classes drive spacing, typography, and layering (z-index usage).
+ *    - Scaling wrapper isolates transform to a single node to prevent layout thrash.
+ *    - Uses flexbox centering and overflow-hidden to maintain a polished frame.
+ *
+ * External Dependencies / Assumptions:
+ * - BASE_W, BASE_H: numeric constants representing the original design width & height.
+ * - LinkItem: shape of fetched link objects (id, href, title, svgPath, viewBox, etc.).
+ * - looksLikeUrl(value: string): boolean helper to detect URL or data URI.
+ * - looksLikePathD(value: string): boolean helper to validate potential SVG path data.
+ *
+ * Security Notes:
+ * - Raw SVG injection (dangerouslySetInnerHTML) should only be used with trusted content.
+ * - Consider sanitizing svgPath if coming from user-generated or untrusted source.
+ *
+ * Potential Enhancements:
+ * - Add loading / skeleton state while fetching links.
+ * - Provide error feedback if fetch fails.
+ * - Add keyboard focus outlines / focus ring enhancements for accessibility.
+ * - Memoize rendered links if transformation logic becomes heavier.
+ *
+ * Props:
+ * @prop className - Optional additional class names appended to the root <section>.
+ *
+ * Returns:
+ * - A <section> element containing the scaled card UI and link icons (if any).
+ *
+ * Lifecycle Summary:
+ * - On mount: attach ResizeObserver, fetch links.
+ * - On unmount: disconnect observer, prevent stale state updates.
+ */
 const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
   className = "",
 }) => {
@@ -35,7 +102,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
   const [scale, setScale] = useState(1);
   const [links, setLinks] = useState<LinkItem[]>([]);
 
-  // scale to fit container
   useEffect(() => {
     const node = hostRef.current;
     if (!node) return;
@@ -48,7 +114,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
     return () => ro.disconnect();
   }, []);
 
-  // fetch socials (logos come ONLY from API now)
   useEffect(() => {
     let off = false;
     (async () => {
@@ -76,9 +141,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
         className,
       ].join(" ")}
     >
-      {/* Available space host (drives scale) */}
       <div ref={hostRef} className="relative w-full h-full flex items-center justify-center">
-        {/* Scaled canvas */}
         <div
           className="relative"
           style={{
@@ -90,7 +153,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
         >
           <div className="absolute inset-0">
             <div className="relative w-[460px] h-[660px] overflow-hidden">
-              {/* Frame (static) */}
               <Image
                 className="absolute inset-0 z-[2] pointer-events-none"
                 width={460}
@@ -100,7 +162,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                 src="/contact/card-container.svg"
               />
 
-              {/* Photo crop window (static) */}
               <div
                 className="absolute z-[1] overflow-hidden w-[422px] h-[432px]"
                 style={{ left: 19, top: 18 }}
@@ -118,7 +179,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                 </div>
               </div>
 
-              {/* Text block */}
               <div
                 className="absolute z-[3] text-left"
                 style={{ left: 19, right: 19, top: 450, paddingTop: 14 }}
@@ -138,7 +198,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                 </div>
               </div>
 
-              {/* Socials — render ONLY if API returned items */}
               {links.length > 0 && (
                 <div className="absolute z-[3] left-0 right-0 bottom-3">
                   <div className="w-full flex items-center justify-center flex-wrap content-center gap-[30px]">
@@ -155,7 +214,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                           title={l.title}
                           className="inline-flex items-center justify-center"
                         >
-                          {/* Render SVG exactly as provided (no recolor) */}
                           {looksLikeUrl(v) ? (
                             // URL or data: URL
                             <img
@@ -167,16 +225,13 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                               referrerPolicy="no-referrer"
                             />
                           ) : v.startsWith("<svg") ? (
-                            // full inline SVG markup
                             <span
                               className="h-[30px] inline-block"
                               style={{ width: "auto" }}
                               aria-hidden="true"
-                              // eslint-disable-next-line react/no-danger
                               dangerouslySetInnerHTML={{ __html: v }}
                             />
                           ) : looksLikePathD(v) ? (
-                            // raw path data
                             <svg
                               viewBox={vb}
                               className="h-[30px] w-auto"
@@ -186,7 +241,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                               <path d={v} />
                             </svg>
                           ) : (
-                            // unknown format → nothing
                             <span className="h-[30px] w-[30px]" aria-hidden="true" />
                           )}
                         </a>
@@ -197,7 +251,6 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
               )}
             </div>
           </div>
-          {/* END canvas */}
         </div>
       </div>
     </section>

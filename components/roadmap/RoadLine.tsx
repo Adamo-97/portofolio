@@ -3,7 +3,7 @@
 export default function RoadLine({
   width,
   height,
-  accentColor = "#7dd3fc",
+  accentColor = "#18a1fd",
   strokeWidth = 3,
   padding = 24,
   dash = 26,

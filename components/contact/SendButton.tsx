@@ -4,20 +4,19 @@ import React, { useEffect, useRef, useState } from "react";
 type Props = {
   label?: string;
   sentLabel?: string;
-  sendingLabel?: string;     // NEW: label while sending
+  sendingLabel?: string;     
   className?: string;
   onClick?: () => void;
   type?: "button" | "submit" | "reset";
-  color?: string;            // inner pill color
-  gapPx?: number;            // space between outer stroke and inner pill
-  ringPx?: number;           // outer stroke thickness
-  hoverScale?: number;       // kept for API compatibility (ignored now)
-  sentMs?: number;           // Sent-state duration (ms) in uncontrolled mode
+  color?: string;            
+  gapPx?: number;            
+  ringPx?: number;           
+  sentMs?: number;           
   sendIconSrc?: string;
   sentIconSrc?: string;
   iconSize?: number;
 
-  status?: "idle" | "sending" | "sent"; // NEW: controlled mode
+  status?: "idle" | "sending" | "sent"; 
 };
 
 function hexToRgb(hex: string) {
@@ -61,6 +60,85 @@ function MaskIcon({
   );
 }
 
+/**
+ * Animated "Send" button component providing visual states for idle, sending, and sent.
+ *
+ * The component can manage its own transient "sent" state or be fully controlled via the `status` prop.
+ * When uncontrolled (no `status` provided), clicking triggers an internal "sent" state for `sentMs`
+ * milliseconds and then reverts automatically. When controlled (`status` provided), internal state
+ * handling is bypassed and the button strictly reflects the supplied mode.
+ *
+ * Visual / UX Features:
+ * - Gradient background and dynamic box shadow whose color derives from the `color` prop.
+ * - Hover translation and icon rotation animations.
+ * - Passing "sending" (via `status`) disables the button and applies a progress cursor.
+ * - Passing / reaching "sent" removes the trailing sheen sweep + swaps the icon.
+ * - Animated sheen (skewed gradient bar) on hover while not in sent state.
+ *
+ * Accessibility:
+ * - `aria-label` dynamically reflects the current state label.
+ * - `aria-disabled` mirrors the disabled state when sending.
+ *
+ * Performance / Cleanup:
+ * - Uses a ref-held timeout to reset the transient sent state; cleaned up on unmount.
+ *
+ * Controlled vs Uncontrolled State:
+ * - Controlled: Provide `status="idle" | "sending" | "sent"`. Internal timer is ignored.
+ * - Uncontrolled: Omit `status`. Click sets internal sent state for `sentMs` ms.
+ *
+ * Edge Cases:
+ * - If `onClick` triggers an async send, supply `status="sending"` externally to block re-clicks.
+ * - Rapid successive clicks while uncontrolled will clear and restart the sent timeout.
+ * - Provide accessible contrast for custom `color` values if WCAG compliance is needed.
+ *
+ * @param label           Optional base label for the idle state (default: "Send").
+ * @param sentLabel       Label shown when the action has completed (default: "Sent").
+ * @param sendingLabel    Label displayed while in the sending state (default: "Sending…").
+ * @param className       Extra class names appended to the root wrapper.
+ * @param onClick         Callback invoked when the button is clicked (fires before internal state change).
+ * @param type            Native button type attribute (default: "button").
+ * @param color           Base hex color used to derive gradients, shadows, and highlight effects (default: "#18a1fd").
+ * @param gapPx           Pixel padding forming the outer gap / halo around the pill (default: 12).
+ * @param ringPx          Width in pixels of the outer ring border (default: 2).
+ * @param sentMs          Duration in milliseconds before reverting from sent to idle in uncontrolled mode (default: 5000).
+ * @param sendIconSrc     Icon (mask) path for the idle / sending states (default: "/contact/send-alt.svg").
+ * @param sentIconSrc     Icon (mask) path for the sent confirmation state (default: "/contact/check.svg").
+ * @param iconSize        Square dimension (px) applied to the icon mask (default: 28).
+ * @param status          Optional externally controlled state override ("idle" | "sending" | "sent"). When provided, internal sent timing is disabled.
+ *
+ * @returns A stylized, animated, accessible send button React element.
+ *
+ * @example
+ * // Uncontrolled usage (auto-resets after sentMs):
+ * <SendButton onClick={() => submitForm()} />
+ *
+ * @example
+ * // Controlled usage with external async flow:
+ * const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+ * async function handleSend() {
+ *   setStatus("sending");
+ *   try {
+ *     await apiSend();
+ *     setStatus("sent");
+ *     setTimeout(() => setStatus("idle"), 4000);
+ *   } catch {
+ *     setStatus("idle");
+ *   }
+ * }
+ * <SendButton status={status} onClick={handleSend} sendingLabel="Submitting…" sentLabel="Done" />
+ *
+ * @example
+ * // Custom styling and color:
+ * <SendButton
+ *   color="#ff4d5a"
+ *   gapPx={16}
+ *   ringPx={3}
+ *   iconSize={32}
+ *   label="Message"
+ *   sendIconSrc="/icons/paper-plane.svg"
+ *   sentIconSrc="/icons/checkmark.svg"
+ * />
+ */
 export default function SendButton({
   label = "Send",
   sentLabel = "Sent",
@@ -71,7 +149,6 @@ export default function SendButton({
   color = "#18a1fd",
   gapPx = 12,
   ringPx = 2,
-  hoverScale = 1.08, // kept but ignored (no hover scale anymore)
   sentMs = 5000,
   sendIconSrc = "/contact/send-alt.svg",
   sentIconSrc = "/contact/check.svg",
@@ -81,7 +158,6 @@ export default function SendButton({
   const { r, g, b } = hexToRgb(color);
   const lighter = lighten(color, 0.26);
 
-  // Uncontrolled fallback (keeps backward compatibility)
   const [sent, setSent] = useState(false);
   const tRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -89,13 +165,12 @@ export default function SendButton({
 
   const handleClick = () => {
     onClick?.();
-    if (status) return; // controlled mode: parent drives the visuals
+    if (status) return; 
     setSent(true);
     if (tRef.current) clearTimeout(tRef.current);
     tRef.current = setTimeout(() => setSent(false), sentMs);
   };
 
-  // Derive visual mode
   const mode: "idle" | "sending" | "sent" = status ?? (sent ? "sent" : "idle");
   const isSending = mode === "sending";
   const isSent = mode === "sent";
@@ -112,7 +187,6 @@ export default function SendButton({
         } as React.CSSProperties
       }
     >
-      {/* OUTER pill (stroke only, bigger via padding) */}
       <div
         aria-hidden
         className="relative rounded-full transition-transform duration-300 ease-out"
@@ -161,7 +235,6 @@ export default function SendButton({
             )}
           </span>
 
-          {/* shimmer keeps running while sending */}
           {!isSent && (
             <div
               className={[

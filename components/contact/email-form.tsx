@@ -7,14 +7,127 @@ import { isValidEmail, NAME_MAX, EMAIL_MAX, MESSAGE_MAX } from "@/lib/contact/va
 
 type Props = {
   className?: string;
-  // onSend should resolve to true only on real success (HTTP 200 + { ok:true })
   onSend?: (payload: { name: string; email: string; message: string; files: File[] }) => Promise<boolean> | boolean;
-  maxTotalMb?: number; // default 10
-  showMobileIcons?: boolean; // render icon ribbon next to Send on mobile
+  maxTotalMb?: number; 
+  showMobileIcons?: boolean; 
 };
 
 type LinkItem = { id: number; title: string; href: string; svgPath: string; viewBox?: string };
 
+/**
+ * EmailForm
+ *
+ * A fully controlled, accessible contact form React component for collecting a user's
+ * name, email address, message, and optional file attachments, then dispatching them
+ * via an asynchronous `onSend` handler. Includes:
+ *
+ * - Input length limits (name, email, message) enforced both via `maxLength` and runtime slicing
+ * - Attachment handling with de-duplication, total size cap, removal controls, and live byte summary
+ * - Progressive status feedback (idle → sending → sent → auto-reset)
+ * - Lightweight responsive layout and mobile-only icon ribbon (when `showMobileIcons` is true)
+ * - Graceful failure messaging and basic validation (required fields + email shape)
+ *
+ * PROPS (inferred from usage):
+ * @property className Optional container className to extend styling.
+ * @property onSend Optional async callback invoked with `{ name, email, message, files }`.
+ *                  Should return `true` on success, `false` (or throw) on failure.
+ * @property maxTotalMb Maximum total attachment size (in megabytes). Defaults to 10.
+ * @property showMobileIcons When true, fetches an array of social/external link metadata from `/api/contact`
+ *                           and renders a horizontally scrollable icon ribbon (intended for mobile viewports).
+ *
+ * INTERNAL STATE:
+ * @state name User-entered name (trimmed externally by length cap).
+ * @state email User-entered email address (basic format validation via `isValidEmail`).
+ * @state message Message body (length-limited by MESSAGE_MAX).
+ * @state files Array of File objects selected via hidden <input type="file" />.
+ * @state error A user-facing error string when validation or sending fails.
+ * @state links Dynamically fetched external link/icon descriptors (used only if `showMobileIcons` is true).
+ * @state status One of "idle" | "sending" | "sent" driving the visual state of the SendButton.
+ *
+ * KEY RUNTIME UTILITIES:
+ * - maxTotalBytes: Derived cap in bytes (MB → bytes).
+ * - totalBytes: Aggregate size of all current attachments.
+ * - totalOk: Boolean gate (totalBytes <= maxTotalBytes).
+ * - trimName(filename, max): Ellipsis-truncates long file names for compact chip display.
+ * - stopSpaceBubble(e): Prevents Space key from bubbling (helpful if parent has global hotkeys).
+ * - handleFilesChange(fileList):
+ *     * Merges previous and newly picked files
+ *     * De-duplicates by composite key: name + size + lastModified
+ *     * Enforces cumulative size limit before committing
+ * - handleSendClick():
+ *     * Validates required fields, email shape, and attachment size
+ *     * Invokes `onSend` (if provided) and updates status accordingly
+ *     * Resets form on success, with auto transition back to idle
+ * - removeFile(key): Removes a file from state by its composite key
+ * - looksLikeUrl / looksLikePathD: Heuristics to decide how to render dynamic SVG/icon sources safely
+ *
+ * ACCESSIBILITY & UX NOTES:
+ * - Buttons include descriptive `aria-label` where icon-only.
+ * - Attachments list uses visually clear chips with remove affordance (×).
+ * - Status transitions avoid blocking the UI; user can attempt resend after failure.
+ * - Uses semantic form-related elements (labels, inputs, textarea) for better screen reader support.
+ * - The mobile icon ribbon hides scrollbars visually while remaining keyboard/assistive accessible.
+ *
+ * SECURITY CONSIDERATIONS:
+ * - Inline SVG strings (`<svg ...>`) are inserted via `dangerouslySetInnerHTML`; ensure server-provided
+ *   `links` data is sanitized to avoid XSS if untrusted sources are involved.
+ * - Only a constrained set of file types is allowed via the `accept` attribute (still validate server-side).
+ *
+ * PERFORMANCE:
+ * - File size aggregation is O(n) over current attachments; typically small.
+ * - Deduplication employs a Set with O(n) complexity for merges.
+ * - Controlled inputs intentionally slice strings to guarantee bounds without over-rendering complexity.
+ *
+ * EXTENSIBILITY:
+ * - To add new allowed file types, update the `accept` attribute and server validation accordingly.
+ * - To extend validation (e.g., stricter email or anti-spam heuristics), modify `handleSendClick`.
+ * - To customize status visuals, adjust or replace `SendButton`.
+ *
+ * ERROR HANDLING:
+ * - User-visible `error` messages are concise and only shown when not overshadowed by size violations.
+ * - Sending failures (network or logical) revert to "idle" and prompt user retry.
+ *
+ * VISUAL / STYLING:
+ * - Tailwind utility classes define spacing, borders, colors, and responsive grid behavior.
+ * - File chips are scrollable when overflowing vertical space to preserve layout constraints.
+ *
+ * SAMPLE USAGE:
+ * ```
+ * <EmailForm
+ *   className="mt-8"
+ *   maxTotalMb={12}
+ *   showMobileIcons
+ *   onSend={async ({ name, email, message, files }) => {
+ *     // forward to API / email service
+ *     const formData = new FormData();
+ *     formData.append("name", name);
+ *     formData.append("email", email);
+ *     formData.append("message", message);
+ *     files.forEach(f => formData.append("files", f));
+ *     const res = await fetch("/api/send-contact", { method: "POST", body: formData });
+ *     return res.ok;
+ *   }}
+ * />
+ * ```
+ *
+ * RETURN:
+ * Renders a section wrapping the contact form, file attachment controls, dynamic counters, a send button,
+ * and (optionally) a horizontally scrollable icon ribbon for mobile contexts.
+ *
+ * LIMITATIONS:
+ * - No built-in localization (all strings inline).
+ * - Basic email validation—replace `isValidEmail` externally for robust parsing.
+ * - Assumes existence/import of NAME_MAX, EMAIL_MAX, MESSAGE_MAX, NameContainer, SendButton, isValidEmail, LinkItem types.
+ *
+ * TESTING RECOMMENDATIONS:
+ * - Verify: empty fields → validation errors
+ * - Invalid email shape → error
+ * - Attachment size just below/above threshold
+ * - Duplicate file selections (same name/size/lastModified) not duplicated
+ * - onSend success vs failure paths
+ * - Status transitions (sending → sent → idle)
+ * - Mobile icons rendering with various `links` payloads (URL, path data, raw <svg>, invalid)
+ */
 const EmailForm: NextPage<Props> = ({
   className = "",
   onSend,
@@ -27,7 +140,7 @@ const EmailForm: NextPage<Props> = ({
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [links, setLinks] = useState<LinkItem[]>([]);
-  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle"); // drives button
+  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle"); 
 
   const inputFileRef = useRef<HTMLInputElement | null>(null);
 
@@ -60,7 +173,6 @@ const EmailForm: NextPage<Props> = ({
     return v.slice(0, head) + "…" + v.slice(-tail);
   };
 
-  // Let spaces type normally even if a global key handler exists (don’t prevent default!)
   const stopSpaceBubble = (e: React.KeyboardEvent) => {
     if (e.key === " " || e.code === "Space" || (e as any).keyCode === 32) e.stopPropagation();
   };
@@ -110,12 +222,10 @@ const EmailForm: NextPage<Props> = ({
       const ok = (await onSend?.({ name, email, message, files })) ?? false;
       if (ok) {
         setStatus("sent");
-        // Clear on success
         setName("");
         setEmail("");
         setMessage("");
         setFiles([]);
-        // Briefly show "Sent", then go back to idle
         setTimeout(() => setStatus("idle"), 1500);
       } else {
         setStatus("idle");
@@ -159,7 +269,7 @@ const EmailForm: NextPage<Props> = ({
               value: name,
               onChange: (e) => setName(e.currentTarget.value.slice(0, NAME_MAX)),
               maxLength: NAME_MAX,
-              onKeyDown: stopSpaceBubble, // allow spaces
+              onKeyDown: stopSpaceBubble,
             }}
           />
           <NameContainer
@@ -177,7 +287,7 @@ const EmailForm: NextPage<Props> = ({
               maxLength: EMAIL_MAX,
               inputMode: "email",
               autoComplete: "email",
-              onKeyDown: stopSpaceBubble, // harmless for email, prevents global traps
+              onKeyDown: stopSpaceBubble,
             }}
           />
         </div>

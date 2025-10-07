@@ -14,7 +14,7 @@ export type RoadPos = "top" | "bottom" | "left" | "right";
 export default function RoadNode({
   item,
   pos,
-  accentColor = "#7dd3fc",
+  accentColor = "#18a1fd",
   iconSize = 88,
   width = 420,
   appearDelayMs = 0,

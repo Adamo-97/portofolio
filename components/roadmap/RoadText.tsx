@@ -14,7 +14,7 @@ export default function RoadText({
   description,
   from,
   to,
-  accentColor = "#7dd3fc",
+  accentColor = "#18a1fd",
   width = 360,
 }: RoadTextProps) {
   return (

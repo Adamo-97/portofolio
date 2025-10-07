@@ -1,12 +1,83 @@
-// components/roadmap/StreetTimeline.tsx
 "use client";
 import { useEffect, useRef, useState } from "react";
 import RoadLine from "./RoadLine";
-import RoadNode, { type RoadmapItem, type RoadPos } from "./RoadNode";
+import RoadNode, { type RoadmapItem } from "./RoadNode";
 
+/**
+ * Responsive, animated "street / road" style timeline component that lays out a series of roadmap items
+ * either horizontally (desktop) or vertically (mobile) with alternating side alignment.
+ *
+ * Layout Modes:
+ * - Desktop (default): A 3-row CSS grid
+ *   Row 1: Nodes for even-indexed items (top)
+ *   Row 2: The animated "road" divider line spanning all columns
+ *   Row 3: Nodes for odd-indexed items (bottom)
+ * - Mobile (≤ 640px): A 3-column CSS grid (left | road | right)
+ *   Left column: Even-indexed items
+ *   Center column: Vertical road line
+ *   Right column: Odd-indexed items
+ *
+ * Adaptive Sizing (when autoScale = true):
+ * - Lane height, icon size, content width, spacing, and mobile dimensions are dynamically derived
+ *   from the container width (via ResizeObserver) and the viewport height.
+ * - Constrains values within sensible min/max ranges for consistent appearance.
+ *
+ * Animation:
+ * - The central road line animates first (roadAnimMs).
+ * - Each roadmap node appears with a staggered delay (perItemStagger * index) after the road animation.
+ *
+ * Accessibility & Structure:
+ * - Purely presentational container; responsibility for semantic content (titles, descriptions, etc.)
+ *   is delegated to the RoadNode component.
+ *
+ * Props:
+ * @param items Array of roadmap items to render. Each item must have a stable `id`. The visual
+ *              alternation (top/bottom or left/right) is determined by its index parity.
+ * @param accentColor Optional brand/accent color applied to the road line and node highlights.
+ *                    Defaults to "#18a1fd".
+ * @param laneHeight Base lane height (in px) used when autoScale = false. Ignored when autoScale = true.
+ *                   Defaults to 420.
+ * @param iconSize Base icon size (in px) used when autoScale = false. Dynamically overridden when autoScale = true.
+ *                 Defaults to 88.
+ * @param autoScale Enables responsive scaling of lane height, icon sizes, content widths, and spacing
+ *                  derived from container width & viewport height. Defaults to true.
+ *
+ * Internal Calculations (when autoScale = true):
+ * - laneScaled: Scales with viewport height (≈48%) clamped between 360–720.
+ * - iconScaled: Scales with column width (≈30%) clamped between 64–140.
+ * - stackWidth: Scales with column width (≈90%) clamped between 260–520.
+ * - Mobile variants (mobIcon, mobWidth) are derived from iconScaled and container width.
+ * - Spacing from the road (padFromRoad) scales gently with lane height.
+ *
+ * Breakpoints:
+ * - Uses a matchMedia query (max-width: 640px) to switch between horizontal and vertical modes.
+ *
+ * Sizing & Measurement:
+ * - Observes its own width via ResizeObserver to drive proportional scaling.
+ * - Tracks viewport height on resize for lane scaling logic.
+ *
+ * Visual Elements:
+ * - RoadLine: Renders the animated dashed divider (horizontal or vertical).
+ * - RoadNode: Renders each individual roadmap entry with delayed appearance.
+ *
+ * Performance Notes:
+ * - Minimal state: width, viewport height, and layout orientation.
+ * - Recomputations occur only on container resize, viewport resize, or breakpoint change.
+ *
+ * Edge Cases:
+ * - If items.length === 0, layout space collapses gracefully (road and nodes are not rendered).
+ * - Division by zero is avoided by fallbacks when computing column widths.
+ *
+ * Expected External Types:
+ * - RoadmapItem: Must at least include an `id` (string | number) plus any fields consumed by RoadNode.
+ *
+ * Styling & Classes:
+ * - Relies on utility (e.g., Tailwind) classes for flex/grid alignment and spacing.
+ * - All absolute sizing differences are computed inline via style props to reduce CSS complexity.
+ */
 export default function StreetTimeline({
   items,
-  accentColor = "#7dd3fc",
+  accentColor = "#18a1fd",
   laneHeight = 420,
   iconSize = 88,
   autoScale = true,

@@ -11,6 +11,62 @@ type Props = {
   enableOnReducedMotion?: boolean; // default false: don't hijack for those users
 };
 
+/**
+ * A headless route navigation helper that converts user scroll, key, and touch
+ * gestures into Next.js route transitions across a linear list of routes.
+ *
+ * Behavior:
+ * - Listens globally for:
+ *   - Wheel events (vertical only; horizontal deltas ignored)
+ *   - Keyboard navigation (ArrowUp/Down, PageUp/PageDown, Space / Shift+Space)
+ *   - Touch swipe gestures (vertical)
+ * - Accumulates wheel delta until a threshold is exceeded, then advances to the
+ *   next or previous route.
+ * - Prevents navigation if a scrollable ancestor element can still scroll in
+ *   the intended direction (avoids hijacking inner scroll areas like modals,
+ *   code blocks, feed containers, etc.).
+ * - Applies a cooldown between navigations to avoid rapid accidental multi-skip.
+ * - Respects the user's `prefers-reduced-motion` setting by default unless explicitly
+ *   overridden via `enableOnReducedMotion`.
+ *
+ * Side Effects:
+ * - Attaches global listeners to `window` for wheel, keyboard, and touch events.
+ * - Cleans up all listeners on unmount or dependency changes.
+ *
+ * Accessibility:
+ * - Keyboard support mirrors conventional document navigation patterns.
+ * - Respects reduced-motion preferences unless `enableOnReducedMotion` is `true`.
+ * - Does not render UI; intended as an enhancement layered atop page structure.
+ *
+ * Performance:
+ * - Minimal work per event (simple accumulation & bounds checks).
+ * - Uses `performance.now()` for cooldown timing precision.
+ *
+ * Recommended Usage:
+ * - Mount once per page (e.g., in a layout) with a stable `routes` array that
+ *   reflects the vertical / chronological / narrative ordering you wish to
+ *   traverse.
+ * - Ensure routes array contains the current pathname, or the component will
+ *   be inert (`index === -1`).
+ *
+ * Example:
+ * ```tsx
+ * <RouteScrollNavigator
+ *   routes={["/", "/about", "/work", "/contact"]}
+ *   cooldownMs={800}
+ *   wheelThreshold={140}
+ *   touchThreshold={70}
+ * />
+ * ```
+ *
+ * @component
+ * @param routes Ordered list of route pathnames representing the scroll / swipe / key navigation sequence.
+ * @param cooldownMs Minimum time (ms) between successive navigations to prevent rapid accidental multi-navigation. Default: 900.
+ * @param wheelThreshold Accumulated vertical wheel delta required to trigger a route change. Higher values require more deliberate scrolling. Default: 120.
+ * @param touchThreshold Vertical touch movement (in pixels) needed to trigger a route change on mobile / touch devices. Default: 60.
+ * @param enableOnReducedMotion If true, enables gesture-based navigation even when the user prefers reduced motion. Default: false.
+ * @returns null (non-visual utility component).
+ */
 export default function RouteScrollNavigator({
   routes,
   cooldownMs = 900,
