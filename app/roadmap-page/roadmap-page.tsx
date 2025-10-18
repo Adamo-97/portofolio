@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/header";
 import StreetTimeline, { type RoadmapItem } from "@/components/roadmap/StreetTimeline";
+import { motion } from "framer-motion";
+import LoadingAnimation from "@/components/LoadingAnimation";
 
 type ApiItem = { id: string; title: string; description: string; icon?: string; from: string; to?: string | null };
 
@@ -16,6 +18,8 @@ const MAX_FPS           = 45;
 
 export default function RoadmapPage() {
   const [items, setItems] = useState<RoadmapItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showParticles, setShowParticles] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -23,10 +27,23 @@ export default function RoadmapPage() {
   useEffect(() => {
     let off = false;
     (async () => {
-      const r = await fetch("/api/roadmap", { cache: "no-store" });
-      if (!r.ok) throw new Error(String(r.status));
-      const all: ApiItem[] = await r.json();
-      if (!off) setItems(all as any);
+      try {
+        const r = await fetch("/api/roadmap", { cache: "no-store" });
+        if (!r.ok) throw new Error(String(r.status));
+        const all: ApiItem[] = await r.json();
+        if (!off) {
+          setItems(all as any);
+          setLoading(false);
+          // Show particles after content loads
+          setTimeout(() => setShowParticles(true), 300);
+        }
+      } catch (e) {
+        console.error("[RoadmapPage] fetch failed:", e);
+        if (!off) {
+          setLoading(false);
+          setTimeout(() => setShowParticles(true), 300);
+        }
+      }
     })();
     return () => { off = true; };
   }, []);
@@ -178,8 +195,20 @@ export default function RoadmapPage() {
             "left -20vw bottom -16vh, right -20vw bottom -16vh, left -8vw bottom -8vh, right -8vw bottom -8vh, center",
         }}
       >
-        {/* Particle canvas */}
-        <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 z-0" aria-hidden="true" />
+        {/* Particle canvas with fade-in */}
+        <canvas 
+          ref={canvasRef} 
+          className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-[800ms] ease-out" 
+          style={{ opacity: showParticles ? 1 : 0 }}
+          aria-hidden="true" 
+        />
+
+        {/* Loading state */}
+        {loading && (
+          <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-sm">
+            <LoadingAnimation text="Loading roadmap..." />
+          </div>
+        )}
 
         {/* Content above particles */}
         <div className="relative z-10 w-full max-w-[1600px] max-h-full place-self-center">

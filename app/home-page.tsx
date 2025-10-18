@@ -2,6 +2,7 @@
 
 import type { NextPage } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import Header from "@/components/header";
@@ -37,6 +38,7 @@ const HomePage: NextPage = () => {
   const [showCards, setShowCards] = useState(false);
   const [showSoftwareVector, setShowSoftwareVector] = useState(false);
   const [showCvBtn, setShowCvBtn] = useState(false);
+  const [showGlow, setShowGlow] = useState(false);
 
   // Kick off the hello badge shortly after mount
   useEffect(() => {
@@ -44,13 +46,9 @@ const HomePage: NextPage = () => {
     return () => clearTimeout(t);
   }, []);
 
-  // When roles finish their single pass, show portrait, then cards
+  // Roles are just for visual effect now, no need to trigger anything
   const onRolesDone = () => {
-    setShowPortrait(true);
-    // let the portrait animation breathe, then bring cards
-    const t1 = setTimeout(() => setShowCards(true), 520);  
-    const t2 = setTimeout(() => setShowCvBtn(true), 520 + 420);  
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    // Portrait, cards, and CV button are now triggered after "Software" types
   };
 
   // Layout helpers (unchanged)
@@ -78,17 +76,24 @@ const HomePage: NextPage = () => {
 
   return (
     <div className={`relative w-full h-dvh min-w-[${MIN_W}px] overflow-hidden bg-black text-white`}>
+      {/* Hidden Link to prefetch contact page */}
+      <Link href="/contact-page" prefetch={true} className="hidden" aria-hidden="true" tabIndex={-1} />
+      
       <div style={slideStyle}>
         <Header />
 
         <main className="relative">
           {/* Your gradient/particles background (enters on its own) */}
-          <BgBlur
-            position="fixed"
-            height={`${artHeight}px`}
-            cropPct={0}
-            topFade="30%"
-          />
+          {showGlow && (
+            <BgBlur
+              position="fixed"
+              height={`${artHeight}px`}
+              cropPct={0}
+              topFade="30%"
+              enterDelayMs={0}
+              enterDurationMs={800}
+            />
+          )}
 
           {/* HERO TEXT */}
           <section className="relative z-10 font-urbanist">
@@ -141,6 +146,12 @@ const HomePage: NextPage = () => {
                     onDone={() => {
                       setShowSoftwareVector(true);   // show the swoosh
                       setGoRoles(true);              // then fade the roles
+                      setShowPortrait(true);         // show portrait immediately
+                      // let the portrait animation breathe, then bring cards
+                      setTimeout(() => setShowCards(true), 520);  
+                      setTimeout(() => setShowCvBtn(true), 520 + 420);
+                      // Show glow as the final animation (after CV button)
+                      setTimeout(() => setShowGlow(true), 520 + 420 + 600);
                     }}
                     className="inline"
                   />
@@ -172,8 +183,8 @@ const HomePage: NextPage = () => {
                     start={goRoles}
                     words={["Designer", "Developer", "Engineer"]}
                     initialDelayMs={180}
-                    firstDwellMs={1000}
-                    dwellMs={700}
+                    firstDwellMs={500}
+                    dwellMs={500}
                     transitionMs={300}
                     effect="fade"
                     onDone={onRolesDone}     // ← use this instead of the inline callback

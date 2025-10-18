@@ -29,9 +29,23 @@ export function SkillCard({
   cardRatio: number; // width / height
   cardIndex: number;
 }) {
+  // Determine grid layout based on item count
+  const itemCount = items.length;
+  let cols = 3;
+  let rows = 2;
+  let maxItems = 6;
+
+  if (itemCount > 6) {
+    cols = 4;
+    rows = Math.ceil(itemCount / 4);
+    maxItems = cols * rows;
+  }
+
+  const displayedItems = items.slice(0, maxItems);
+
   return (
     <div
-      className="relative rounded-2xl border bg-white/[0.06] border-white/10 backdrop-blur-[2px] grid overflow-hidden animate-card"
+      className="relative rounded-2xl border bg-white/[0.02] border-white/10 backdrop-blur-sm grid overflow-hidden animate-card"
       style={{
         width: cardW,
         height: cardW / cardRatio,
@@ -47,7 +61,7 @@ export function SkillCard({
         className="pointer-events-none absolute inset-0 rounded-2xl"
         style={{
           background:
-            "radial-gradient(80% 80% at 70% 20%, rgba(56,189,248,0.18) 0%, rgba(56,189,248,0.06) 42%, transparent 72%)",
+            "radial-gradient(80% 80% at 70% 20%, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.04) 42%, transparent 72%)",
         }}
       />
 
@@ -58,20 +72,23 @@ export function SkillCard({
         </h2>
       </div>
 
-      {/* Description */}
+      {/* Description - now centered */}
       <div className="px-5">
-        <p className="text-[12px] leading-[16px] text-white/75 line-clamp-2 text-left">
+        <p className="text-[12px] leading-[16px] text-white/75 line-clamp-2 text-center">
           {blurb}
         </p>
       </div>
 
-      {/* Icons */}
+      {/* Icons - dynamic grid */}
       <div className="px-4 pb-5 h-full min-h-0">
         <div
-          className="grid grid-cols-3 gap-3 h-full min-h-0"
-          style={{ gridTemplateRows: "repeat(2, minmax(0, 1fr))" }}
+          className="grid gap-3 h-full min-h-0"
+          style={{ 
+            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` 
+          }}
         >
-          {items.slice(0, 6).map((s, i) => (
+          {displayedItems.map((s, i) => (
             <div
               key={s.id}
               className="grid min-h-0 overflow-hidden animate-icon"
@@ -88,22 +105,6 @@ export function SkillCard({
               <div className="mt-0.5 h-[12px] text-[10px] leading-[12px] text-white/80 text-center truncate">
                 {s.name}
               </div>
-            </div>
-          ))}
-
-          {/* pads if fewer than 6 */}
-          {Array.from({ length: Math.max(0, 6 - items.length) }).map((_, i) => (
-            <div
-              key={`pad-${i}`}
-              className="grid min-h-0 overflow-hidden animate-icon"
-              style={{
-                gridTemplateRows: "minmax(0, 1fr) auto",
-                animationDelay: `${cardIndex * 120 + (6 + i) * 70}ms`,
-                animationFillMode: "both",
-              }}
-            >
-              <div className="min-h-0 h-full py-[15px]" />
-              <div className="mt-0.5 h-[12px]" />
             </div>
           ))}
         </div>

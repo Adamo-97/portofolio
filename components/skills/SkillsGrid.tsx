@@ -4,6 +4,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useViewportStage } from "./useViewportStage";
 import { SkillCard } from "./SkillCard";
+import { motion } from "framer-motion";
+import LoadingAnimation from "@/components/LoadingAnimation";
 
 const BASE = { cardW: 360, gap: 24, cardRatio: 4 / 3, padY: 40 };
 type Spec = { cols: number; rows: number };
@@ -22,6 +24,7 @@ export type UISkill = {
 export default function SkillsGrid() {
   const [allSkills, setAllSkills] = useState<UISkill[]>([]);
   const [cats, setCats] = useState<{ key: string; title: string; blurb: string }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Fetch categories (DB: skill_category with title/blurb)
   useEffect(() => {
@@ -48,10 +51,16 @@ export default function SkillsGrid() {
         const r = await fetch("/api/skills", { cache: "no-store" });
         if (!r.ok) throw new Error(String(r.status));
         const items: UISkill[] = await r.json();
-        if (!off) setAllSkills(items);
+        if (!off) {
+          setAllSkills(items);
+          setLoading(false);
+        }
       } catch (e) {
         console.error("[SkillsGrid] fetch /api/skills failed:", e);
-        if (!off) setAllSkills([]);
+        if (!off) {
+          setAllSkills([]);
+          setLoading(false);
+        }
       }
     })();
     return () => { off = true; };
@@ -80,6 +89,15 @@ export default function SkillsGrid() {
 
   const STAGE = { ...BASE, cols: spec.cols, rows: spec.rows };
   const { stageStyle, wrapperStyle } = useViewportStage(STAGE);
+
+  // Loading state with animated icons
+  if (loading) {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-black">
+        <LoadingAnimation text="Loading skills..." />
+      </main>
+    );
+  }
 
   return (
     <main className="flex items-center justify-center" style={wrapperStyle(STAGE.padY)}>

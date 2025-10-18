@@ -4,6 +4,7 @@ import Header from "@/components/header";
 import { type Project } from "@/components/project/ProjectCard";
 import CategoryFolder, { CATEGORY_COLORS } from "@/components/project/CategoryFolder";
 import ProjectCard from "@/components/project/ProjectCard";
+import LoadingAnimation from "@/components/LoadingAnimation";
 
 const BRAND = "#18a1fd";
 const RGB = "24,161,253";
@@ -19,6 +20,7 @@ const ProjectsPageClient: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
+  const [showParticles, setShowParticles] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -42,9 +44,13 @@ const ProjectsPageClient: React.FC = () => {
           const firstCategory = data[0].category;
           setOpenCategory(firstCategory);
         }
+        
+        // Show particles after content loads
+        setTimeout(() => setShowParticles(true), 300);
       } catch (err) {
         console.error("Error fetching projects:", err);
         setError("Failed to load projects. Please try again later.");
+        setTimeout(() => setShowParticles(true), 300);
       } finally {
         setLoading(false);
       }
@@ -200,20 +206,18 @@ const ProjectsPageClient: React.FC = () => {
             "left -20vw bottom -16vh, right -20vw bottom -16vh, left -8vw bottom -8vh, right -8vw bottom -8vh, center",
         }}
       >
-        {/* Particle canvas */}
-        <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0" aria-hidden="true" />
+        {/* Particle canvas with fade-in */}
+        <canvas 
+          ref={canvasRef} 
+          className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-[800ms] ease-out" 
+          style={{ opacity: showParticles ? 1 : 0 }}
+          aria-hidden="true" 
+        />
 
         {/* Content above particles - NO SCROLLING */}
         <div className="relative z-10 flex flex-col h-full max-w-[1800px] mx-auto w-full overflow-hidden">
         {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="text-6xl mb-4 animate-bounce">📁</div>
-              <p className="text-white/70 text-lg">Loading projects...</p>
-            </div>
-          </div>
-        )}
+        {loading && <LoadingAnimation text="Loading projects..." />}
 
         {/* Error State */}
         {error && !loading && (
