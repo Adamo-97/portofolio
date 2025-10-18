@@ -2,12 +2,14 @@
 import Image from "next/image";
 import React, { useEffect, useMemo, useState, type CSSProperties } from "react";
 
+type DownloadState = "idle" | "downloading" | "downloaded" | "error";
+
 export type DownloadCvButtonProps =
   React.ComponentProps<"button"> & {
     className?: string;
     downloadCV?: string;
     iconPlaceholder: string;
-    href?: string;                 // optional: link to your CV (e.g., "/cv.pdf")
+    href?: string;                 // optional: link to your CV (e.g., "/api/cv")
     downloadAttr?: boolean;        // optional: add download attribute on <a>
 
     // Optional sizing overrides
@@ -45,6 +47,55 @@ export default function DownloadCvButton({
 }: DownloadCvButtonProps) {
   // "entered" drives the mount animation (opacity/translate/scale)
   const [entered, setEntered] = useState<boolean>(!animateIn && show);
+  const [downloadState, setDownloadState] = useState<DownloadState>("idle");
+
+  // Handle CV download
+  const handleDownload = async () => {
+    if (!href || downloadState === "downloading") return;
+
+    setDownloadState("downloading");
+
+    try {
+      console.log("[CV Button] Starting download from:", href);
+      
+      // Use a direct download approach instead of fetch
+      // This bypasses any caching issues
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = "CV.pdf";
+      link.style.display = "none";
+      
+      // Add a timestamp to bypass cache
+      const timestamp = Date.now();
+      link.href = `${href}?t=${timestamp}`;
+      
+      document.body.appendChild(link);
+      
+      console.log("[CV Button] Triggering download...");
+      link.click();
+      
+      // Clean up after a short delay
+      setTimeout(() => {
+        document.body.removeChild(link);
+        console.log("[CV Button] Download initiated successfully!");
+        setDownloadState("downloaded");
+        
+        // Reset to idle after 3 seconds
+        setTimeout(() => {
+          setDownloadState("idle");
+        }, 3000);
+      }, 100);
+      
+    } catch (error) {
+      console.error("[CV Button] Download failed with error:", error);
+      setDownloadState("error");
+      
+      // Reset to idle after 3 seconds
+      setTimeout(() => {
+        setDownloadState("idle");
+      }, 3000);
+    }
+  };
 
   useEffect(() => {
     if (!animateIn) {
@@ -72,19 +123,34 @@ export default function DownloadCvButton({
     [iconPlaceholderWidth, iconPlaceholderHeight]
   );
 
+  // Get button text based on state
+  const getButtonText = () => {
+    switch (downloadState) {
+      case "downloading":
+        return "Downloading...";
+      case "downloaded":
+        return "Downloaded ✓";
+      case "error":
+        return "Error - Retry";
+      default:
+        return downloadCV;
+    }
+  };
+
   // === Inner pill (blue) — your existing ink effect ===
   const inner = (
     <div
       className={[
         "inner relative isolate",
         "rounded-[clamp(30px,8vw,60px)]",
-        "bg-cornflowerblue-100",
+        downloadState === "downloaded" ? "bg-green-500" : downloadState === "error" ? "bg-red-500" : "bg-cornflowerblue-100",
         "border-lightgray border-solid border-[0.5px]",
         "overflow-hidden",
         "flex flex-row items-center justify-center",
         "py-[clamp(6px,1.4vw,9px)]",
         "px-[clamp(12px,2.2vw,19px)]",
         "gap-[clamp(6px,1.4vw,11px)]",
+        "transition-colors duration-300",
       ].join(" ")}
       style={
         {
@@ -102,7 +168,7 @@ export default function DownloadCvButton({
           "select-none",
         ].join(" ")}
       >
-        {downloadCV}
+        {getButtonText()}
       </div>
 
       <span
@@ -110,18 +176,60 @@ export default function DownloadCvButton({
           "icon relative z-10 grid place-items-center",
           "w-[clamp(22px,4vw,42px)] h-[clamp(22px,4vw,42px)]",
           "transition-transform duration-500 ease-out will-change-transform",
-          "group-hover:translate-x-[2px] group-hover:rotate-135",
+          downloadState === "downloading" ? "animate-spin" : "group-hover:translate-x-[2px] group-hover:rotate-135",
         ].join(" ")}
       >
-        <Image
-          className="w-full h-full"
-          width={42}
-          height={42}
-          sizes="100vw"
-          alt=""
-          src={iconPlaceholder}
-          style={iconStyle}
-        />
+        {downloadState === "downloading" ? (
+          // Spinner icon
+          <svg className="w-full h-full" viewBox="0 0 24 24" fill="none">
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+        ) : downloadState === "downloaded" ? (
+          // Checkmark icon
+          <svg className="w-full h-full" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M20 6L9 17L4 12"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ) : downloadState === "error" ? (
+          // Error icon
+          <svg className="w-full h-full" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+            <path
+              d="M12 8v4m0 4h.01"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        ) : (
+          // Default download icon
+          <Image
+            className="w-full h-full"
+            width={42}
+            height={42}
+            sizes="100vw"
+            alt=""
+            src={iconPlaceholder}
+            style={iconStyle}
+          />
+        )}
       </span>
 
       <style jsx>{`
@@ -173,7 +281,7 @@ export default function DownloadCvButton({
   // === Outer shell (entrance controlled by `entered`) ===
   const baseClasses = [
     "group",
-    "cursor-pointer",
+    downloadState === "downloading" ? "cursor-wait" : "cursor-pointer",
     "border-white border-solid border-[2px]",
     "py-[clamp(6px,1.1vw,8px)]",
     "px-[clamp(6px,1.1vw,8px)]",
@@ -189,25 +297,17 @@ export default function DownloadCvButton({
     liftOnHover ? "hover:shadow-[0_10px_28px_rgba(24,161,253,0.25)]" : "",
     "active:translate-y-0 active:scale-[0.99]",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cornflowerblue-100/80",
-    // keep it non-interactive while hidden
-    entered ? "pointer-events-auto" : "pointer-events-none",
+    // keep it non-interactive while hidden or downloading
+    entered && downloadState !== "downloading" ? "pointer-events-auto" : "pointer-events-none",
   ].join(" ");
 
   const content = inner;
 
-  return href ? (
-    <a
-      href={href}
-      aria-label={downloadCV}
-      {...(downloadAttr ? { download: "" } : {})}
-      className={`${baseClasses} ${className}`}
-      style={wrapperStyle}
-    >
-      {content}
-    </a>
-  ) : (
+  return (
     <button
-      aria-label={downloadCV}
+      aria-label={getButtonText()}
+      onClick={handleDownload}
+      disabled={downloadState === "downloading"}
       className={`${baseClasses} ${className}`}
       style={wrapperStyle}
       {...btnProps}

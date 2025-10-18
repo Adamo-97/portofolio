@@ -64,10 +64,10 @@ export default function RoadLine({
             x1={w / 2} y1={padding} x2={w / 2} y2={h - padding}
             stroke={accentColor} strokeOpacity="0.9" strokeWidth={strokeWidth} strokeLinecap="round"
             vectorEffect="non-scaling-stroke" strokeDasharray={`${dash} ${gap}`} markerEnd="url(#rdArrow)"
-            // 👇 reveal dash-by-dash from start to arrow
+            // 👇 smooth reveal from start to arrow
             style={{
               strokeDashoffset: len,
-              animation: `dashPop ${animMs}ms steps(${steps}, end) forwards, roadFade ${Math.min(animMs, 500)}ms ease forwards`,
+              animation: `dashPop ${animMs}ms cubic-bezier(0.4, 0, 0.2, 1) forwards, roadFade ${Math.min(animMs, 500)}ms ease forwards`,
             }}
           />
         ) : (
@@ -77,7 +77,7 @@ export default function RoadLine({
             vectorEffect="non-scaling-stroke" strokeDasharray={`${dash} ${gap}`} markerEnd="url(#rdArrow)"
             style={{
               strokeDashoffset: len,
-              animation: `dashPop ${animMs}ms steps(${steps}, end) forwards, roadFade ${Math.min(animMs, 500)}ms ease forwards`,
+              animation: `dashPop ${animMs}ms cubic-bezier(0.4, 0, 0.2, 1) forwards, roadFade ${Math.min(animMs, 500)}ms ease forwards`,
             }}
           />
         )}

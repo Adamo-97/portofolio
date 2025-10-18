@@ -4,76 +4,8 @@ import RoadLine from "./RoadLine";
 import RoadNode, { type RoadmapItem } from "./RoadNode";
 
 /**
- * Responsive, animated "street / road" style timeline component that lays out a series of roadmap items
- * either horizontally (desktop) or vertically (mobile) with alternating side alignment.
- *
- * Layout Modes:
- * - Desktop (default): A 3-row CSS grid
- *   Row 1: Nodes for even-indexed items (top)
- *   Row 2: The animated "road" divider line spanning all columns
- *   Row 3: Nodes for odd-indexed items (bottom)
- * - Mobile (≤ 640px): A 3-column CSS grid (left | road | right)
- *   Left column: Even-indexed items
- *   Center column: Vertical road line
- *   Right column: Odd-indexed items
- *
- * Adaptive Sizing (when autoScale = true):
- * - Lane height, icon size, content width, spacing, and mobile dimensions are dynamically derived
- *   from the container width (via ResizeObserver) and the viewport height.
- * - Constrains values within sensible min/max ranges for consistent appearance.
- *
- * Animation:
- * - The central road line animates first (roadAnimMs).
- * - Each roadmap node appears with a staggered delay (perItemStagger * index) after the road animation.
- *
- * Accessibility & Structure:
- * - Purely presentational container; responsibility for semantic content (titles, descriptions, etc.)
- *   is delegated to the RoadNode component.
- *
- * Props:
- * @param items Array of roadmap items to render. Each item must have a stable `id`. The visual
- *              alternation (top/bottom or left/right) is determined by its index parity.
- * @param accentColor Optional brand/accent color applied to the road line and node highlights.
- *                    Defaults to "#18a1fd".
- * @param laneHeight Base lane height (in px) used when autoScale = false. Ignored when autoScale = true.
- *                   Defaults to 420.
- * @param iconSize Base icon size (in px) used when autoScale = false. Dynamically overridden when autoScale = true.
- *                 Defaults to 88.
- * @param autoScale Enables responsive scaling of lane height, icon sizes, content widths, and spacing
- *                  derived from container width & viewport height. Defaults to true.
- *
- * Internal Calculations (when autoScale = true):
- * - laneScaled: Scales with viewport height (≈48%) clamped between 360–720.
- * - iconScaled: Scales with column width (≈30%) clamped between 64–140.
- * - stackWidth: Scales with column width (≈90%) clamped between 260–520.
- * - Mobile variants (mobIcon, mobWidth) are derived from iconScaled and container width.
- * - Spacing from the road (padFromRoad) scales gently with lane height.
- *
- * Breakpoints:
- * - Uses a matchMedia query (max-width: 640px) to switch between horizontal and vertical modes.
- *
- * Sizing & Measurement:
- * - Observes its own width via ResizeObserver to drive proportional scaling.
- * - Tracks viewport height on resize for lane scaling logic.
- *
- * Visual Elements:
- * - RoadLine: Renders the animated dashed divider (horizontal or vertical).
- * - RoadNode: Renders each individual roadmap entry with delayed appearance.
- *
- * Performance Notes:
- * - Minimal state: width, viewport height, and layout orientation.
- * - Recomputations occur only on container resize, viewport resize, or breakpoint change.
- *
- * Edge Cases:
- * - If items.length === 0, layout space collapses gracefully (road and nodes are not rendered).
- * - Division by zero is avoided by fallbacks when computing column widths.
- *
- * Expected External Types:
- * - RoadmapItem: Must at least include an `id` (string | number) plus any fields consumed by RoadNode.
- *
- * Styling & Classes:
- * - Relies on utility (e.g., Tailwind) classes for flex/grid alignment and spacing.
- * - All absolute sizing differences are computed inline via style props to reduce CSS complexity.
+ * Modern responsive timeline component with clean vertical layout on mobile
+ * and horizontal street-style layout on desktop.
  */
 export default function StreetTimeline({
   items,
@@ -91,10 +23,11 @@ export default function StreetTimeline({
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [w, setW] = useState(0);
   const [vh, setVh] = useState(900);
-  const [vertical, setVertical] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const el = wrapRef.current; if (!el) return;
+    const el = wrapRef.current;
+    if (!el) return;
     const update = () => setW(el.clientWidth);
     update();
     const ro = new ResizeObserver(update);
@@ -110,45 +43,29 @@ export default function StreetTimeline({
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const apply = () => setVertical(mq.matches);
+    const mq = window.matchMedia("(max-width: 768px)");
+    const apply = () => setIsMobile(mq.matches);
     apply();
     mq.addEventListener?.("change", apply);
     return () => mq.removeEventListener?.("change", apply);
   }, []);
 
-  // responsive totals
-  const laneScaled = autoScale ? Math.round(clamp(vh * 0.48, 360, 720)) : laneHeight;
-  const colW = items.length > 0 ? w / items.length : w;
-
-  // scaled bits
-  const iconScaled = autoScale ? Math.round(clamp(colW * 0.30, 64, 140)) : iconSize;
-  const stackWidth = autoScale ? Math.round(clamp(colW * 0.90, 260, 520)) : 420;
-  const mobIcon = Math.round(iconScaled * 0.78);
-  const mobWidth = Math.round(clamp(w * 0.42, 220, 360));
-  const padFromRoad = Math.round(clamp(laneScaled * 0.02, 8, 20));
-
   const roadAnimMs = 900;
   const perItemStagger = 180;
 
-  // thickness of the road (divider track)
+  // Desktop calculations
+  const laneScaled = autoScale ? Math.round(clamp(vh * 0.48, 360, 720)) : laneHeight;
+  const colW = items.length > 0 ? w / items.length : w;
+  const iconScaled = autoScale ? Math.round(clamp(colW * 0.30, 64, 140)) : iconSize;
+  const stackWidth = autoScale ? Math.round(clamp(colW * 0.90, 260, 520)) : 420;
+  const padFromRoad = Math.round(clamp(laneScaled * 0.02, 8, 20));
   const roadPx = 12;
 
   return (
-    <div
-      ref={wrapRef}
-      className="relative w-full mx-auto"
-      style={{ height: vertical ? laneScaled * items.length : laneScaled }}
-    >
-      {/* DESKTOP: rows = [top | ROAD | bottom] */}
-      {!vertical ? (
-        <div
-          className="relative z-10 grid h-full overflow-visible"
-          style={{
-            gridTemplateRows: `1fr ${roadPx}px 1fr`,
-            gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))`,
-          }}
-        >
+    <div ref={wrapRef} className="relative w-full mx-auto" style={{ height: isMobile ? '100%' : undefined }}>
+      {/* DESKTOP: Horizontal street layout */}
+      {!isMobile ? (
+        <div className="relative z-10 grid h-full overflow-visible" style={{ height: laneScaled, gridTemplateRows: `1fr ${roadPx}px 1fr`, gridTemplateColumns: `repeat(${items.length}, minmax(0,1fr))` }}>
           {/* TOP row (even columns) */}
           {items.map((it, i) => (
             <div key={`top-${it.id}`} className="flex items-end justify-center">
@@ -166,19 +83,9 @@ export default function StreetTimeline({
             </div>
           ))}
 
-          {/* ROAD row (span all columns) */}
+          {/* ROAD row */}
           <div style={{ gridColumn: `1 / -1` }}>
-            <RoadLine
-              width={w}
-              height={roadPx}
-              accentColor={accentColor}
-              padding={28}
-              dash={26}
-              gap={14}
-              animMs={roadAnimMs}
-              vertical={false}
-              mode="divider"
-            />
+            <RoadLine width={w} height={roadPx} accentColor={accentColor} padding={28} dash={26} gap={14} animMs={roadAnimMs} vertical={false} mode="divider" />
           </div>
 
           {/* BOTTOM row (odd columns) */}
@@ -199,68 +106,78 @@ export default function StreetTimeline({
           ))}
         </div>
       ) : (
-        // MOBILE: columns = [left | ROAD | right]
-        <div
-          className="relative z-10 grid h-full overflow-visible"
-          style={{
-            gridTemplateColumns: `1fr ${roadPx}px 1fr`,
-            gridTemplateRows: `repeat(${items.length}, minmax(0,1fr))`,
-          }}
-        >
-          {items.map((it, i) => (
-            <div key={it.id} className="contents">
-              {/* LEFT col (even rows) */}
-              <div className="flex items-center justify-end pr-3">
-                {i % 2 === 0 ? (
-                  <RoadNode
-                    item={it}
-                    pos="left"
-                    accentColor={accentColor}
-                    iconSize={mobIcon}
-                    width={mobWidth}
-                    appearDelayMs={roadAnimMs + i * perItemStagger}
-                  />
-                ) : null}
-              </div>
+        // MOBILE: Compact single-side layout that fits all items in viewport
+        <div className="relative z-10 w-full h-full flex flex-col px-4" style={{ paddingTop: "4px", paddingBottom: "4px" }}>
+          {/* Vertical line on left */}
+          <div className="absolute left-[22px] top-0 bottom-0 w-[2px] z-0 opacity-0" style={{ animation: `fadeIn 800ms ease forwards ${roadAnimMs * 0.3}ms` }}>
+            <div className="w-full h-full" style={{ background: `linear-gradient(to bottom, transparent, ${accentColor}40 5%, ${accentColor}40 95%, transparent)` }} />
+          </div>
 
-              {/* ROAD col (span all rows) */}
-              {i === 0 && (
-                <div style={{ gridRow: `1 / -1` }}>
-                  <RoadLine
-                    width={roadPx}
-                    height={laneScaled * items.length}
-                    accentColor={accentColor}
-                    padding={28}
-                    dash={26}
-                    gap={14}
-                    animMs={roadAnimMs}
-                    vertical
-                    mode="divider"
-                  />
+          {/* Timeline items - evenly distributed to fit viewport (newest first) */}
+          <div className="flex flex-col w-full h-full justify-between">
+            {[...items].reverse().map((it, i) => (
+              <div key={it.id} className="relative z-10 opacity-0 pl-10 pr-2 flex items-center" style={{ animation: `slideIn 600ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards ${roadAnimMs + i * perItemStagger}ms`, minHeight: 0 }}>
+                {/* Timeline dot */}
+                <div className="absolute left-[18px] top-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full border-2 z-20" style={{ borderColor: accentColor, background: "rgba(15, 23, 42, 0.9)", boxShadow: `0 0 8px ${accentColor}60` }} />
+
+                {/* Compact card - constrained height */}
+                <div className="relative bg-white/[0.02] backdrop-blur-sm rounded-lg border border-white/10 p-2.5 hover:bg-white/[0.04] transition-all duration-300 w-full">
+                  <div className="flex items-start gap-2">
+                    {/* Compact icon */}
+                    {it.icon && (
+                      <div className="relative flex-shrink-0 w-9 h-9 rounded-lg p-1">
+                        <img src={it.icon} alt="" className="w-full h-full object-contain" />
+                      </div>
+                    )}
+
+                    {/* Compact text content */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-white font-semibold text-[13px] leading-tight mb-0.5">{it.title}</h3>
+                      
+                      {/* Date range */}
+                      {(it.from || it.to) && (
+                        <div className="text-[9px] font-medium mb-0.5 opacity-90" style={{ color: accentColor }}>
+                          {formatRange(it.from, it.to)}
+                        </div>
+                      )}
+
+                      {/* Compact description */}
+                      <p className="text-sky-100/75 text-[10px] leading-snug line-clamp-2">{it.description}</p>
+                    </div>
+                  </div>
                 </div>
-              )}
-
-              {/* RIGHT col (odd rows) */}
-              <div className="flex items-center justify-start pl-3">
-                {i % 2 === 1 ? (
-                  <RoadNode
-                    item={it}
-                    pos="right"
-                    accentColor={accentColor}
-                    iconSize={mobIcon}
-                    width={mobWidth}
-                    appearDelayMs={roadAnimMs + i * perItemStagger}
-                  />
-                ) : null}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(-20px); filter: blur(4px); }
+          to { opacity: 1; transform: translateX(0); filter: none; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
+
+function formatRange(from?: string, to?: string | null) {
+  if (!from) return "";
+  const f = new Date(from);
+  const t = to ? new Date(to) : null;
+  const safe = (d: Date) => (isNaN(d.getTime()) ? "" : d.toLocaleString(undefined, { month: "short", year: "numeric" }));
+  const fm = safe(f);
+  const tm = t ? safe(t) : "Present";
+  return fm && tm ? `${fm} – ${tm}` : fm || tm || "";
+}
+
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
+
 export { type RoadmapItem, type RoadPos } from "./RoadNode";

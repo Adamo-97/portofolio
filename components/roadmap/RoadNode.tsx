@@ -19,6 +19,7 @@ export default function RoadNode({
   width = 420,
   appearDelayMs = 0,
   padFromRoad = 14,
+  isMobile = false,
 }: {
   item: RoadmapItem;
   pos: RoadPos;
@@ -27,9 +28,10 @@ export default function RoadNode({
   width?: number;
   appearDelayMs?: number;
   padFromRoad?: number;
+  isMobile?: boolean;
 }) {
-  const gap = Math.round(iconSize * 0.18);                // scales with icon
-  const diamondPx = Math.round(clamp(iconSize * 0.12, 8, 16));
+  const gap = Math.round(isMobile ? iconSize * 0.14 : iconSize * 0.18);
+  const diamondPx = Math.round(clamp(isMobile ? 6 : iconSize * 0.12, 6, 16));
   const descMax = Math.round(clamp(width - 40, 220, width - 20));
 
   const Icon = (
@@ -88,11 +90,17 @@ export default function RoadNode({
 
   const Text = (
     <div className="text-center opacity-0 animate-nodeIn" style={{ width, animationDelay: `${appearDelayMs + 320}ms` }}>
-      <div className="text-sky-50 text-[18px] font-semibold leading-tight">{item.title}</div>
-      <div className="mt-0.5 text-[12px] italic hidden sm:block" style={{ color: accentColor }}>
+      <div className="text-sky-50 font-semibold leading-tight" style={{ fontSize: isMobile ? '15px' : '18px' }}>
+        {item.title}
+      </div>
+      <div className="mt-0.5 italic" style={{ fontSize: isMobile ? '10px' : '12px', color: accentColor }}>
         {fmtRange(item.from, item.to)}
       </div>
-      <p className="mt-2 text-[14px] leading-snug text-sky-100/85 hidden sm:block" style={{ maxWidth: descMax, margin: "0 auto" }}>
+      <p className="mt-1.5 leading-snug text-sky-100/85" style={{ 
+        fontSize: isMobile ? '12px' : '14px', 
+        maxWidth: descMax, 
+        margin: "0 auto" 
+      }}>
         {item.description}
       </p>
     </div>

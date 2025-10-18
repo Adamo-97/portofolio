@@ -250,39 +250,98 @@ const ProjectsPageClient: React.FC = () => {
 
         {/* Category Folders */}
         {!loading && !error && projects.length > 0 && (
-          <div className="flex flex-col items-center gap-8 sm:gap-10 lg:gap-12 px-2 sm:px-4 h-full">
-            {/* All categories in a single horizontal row - NO WRAP, responsive */}
-            <div className="flex gap-2 sm:gap-3 lg:gap-4 justify-center pb-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
-              {Object.entries(projectsByCategory).map(([category, categoryProjects], index) => (
-                <CategoryFolder
-                  key={category}
-                  category={category}
-                  projects={categoryProjects}
-                  index={index}
-                  isOpen={openCategory === category}
-                  onToggle={() => setOpenCategory(category)}
-                />
-              ))}
-            </div>
-            
-            {/* Horizontal Projects Display - NO SCROLLING, Responsive scale */}
-            {openCategory && projectsByCategory[openCategory] && (
-              <div className="w-full flex justify-center items-start flex-1 min-h-0">
-                <div className="flex gap-2 sm:gap-3 lg:gap-4 justify-center items-start flex-wrap" style={{ 
-                  maxWidth: '100%',
-                }}>
-                  {projectsByCategory[openCategory].map((project, idx) => (
-                    <ProjectCard 
-                      key={project.id} 
-                      project={project} 
-                      index={idx}
-                      categoryColor={CATEGORY_COLORS[openCategory]}
-                    />
-                  ))}
-                </div>
+          <>
+            {/* DESKTOP: Category Folders */}
+            <div className="hidden md:flex flex-col items-center gap-8 sm:gap-10 lg:gap-12 px-2 sm:px-4 pt-6 sm:pt-8 lg:pt-10 h-full">
+              {/* All categories in a single horizontal row - NO WRAP, responsive */}
+              <div className="flex gap-2 sm:gap-3 lg:gap-4 justify-center pb-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
+                {Object.entries(projectsByCategory).map(([category, categoryProjects], index) => (
+                  <CategoryFolder
+                    key={category}
+                    category={category}
+                    projects={categoryProjects}
+                    index={index}
+                    isOpen={openCategory === category}
+                    onToggle={() => setOpenCategory(category)}
+                  />
+                ))}
               </div>
-            )}
-          </div>
+              
+              {/* Horizontal Projects Display - NO SCROLLING, Responsive scale */}
+              {openCategory && projectsByCategory[openCategory] && (
+                <div className="w-full flex justify-center items-center flex-1 min-h-0 overflow-hidden px-4">
+                  <div 
+                    className="flex gap-4 sm:gap-6 lg:gap-8 justify-center items-center flex-wrap"
+                    style={{ 
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      transform: (() => {
+                        const count = projectsByCategory[openCategory].length;
+                        if (count <= 3) return 'scale(1)';
+                        if (count <= 6) return 'scale(0.85)';
+                        if (count <= 9) return 'scale(0.7)';
+                        return 'scale(0.6)';
+                      })(),
+                      transformOrigin: 'center',
+                      transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  >
+                    {projectsByCategory[openCategory].map((project, idx) => (
+                      <ProjectCard 
+                        key={project.id} 
+                        project={project} 
+                        index={idx}
+                        categoryColor={CATEGORY_COLORS[openCategory]}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* MOBILE: Category Buttons + 3x2 Grid */}
+            <div className="md:hidden flex flex-col h-full w-full px-3 py-3">
+              {/* Category Buttons - Single Row */}
+              <div className="flex gap-2 justify-center mb-4 flex-shrink-0">
+                {Object.keys(projectsByCategory).map((category) => {
+                  const isActive = openCategory === category;
+                  const colors = CATEGORY_COLORS[category];
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => setOpenCategory(category)}
+                      className="relative px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300 border"
+                      style={{
+                        backgroundColor: isActive ? `${colors?.accent || '#18a1fd'}30` : 'rgba(255,255,255,0.05)',
+                        borderColor: isActive ? `${colors?.accent || '#18a1fd'}60` : 'rgba(255,255,255,0.1)',
+                        color: isActive ? '#fff' : 'rgba(255,255,255,0.7)',
+                        boxShadow: isActive ? `0 0 15px ${colors?.glow || 'rgba(24,161,253,0.4)'}` : 'none',
+                      }}
+                    >
+                      {category}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 3x2 Grid of Projects */}
+              {openCategory && projectsByCategory[openCategory] && (
+                <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+                  <div className="grid grid-cols-3 gap-2 w-full auto-rows-fr" style={{ maxHeight: 'calc(100vh - 180px)' }}>
+                    {projectsByCategory[openCategory].slice(0, 6).map((project, idx) => (
+                      <ProjectCard 
+                        key={project.id}
+                        project={project} 
+                        index={idx}
+                        categoryColor={CATEGORY_COLORS[openCategory]}
+                        isMobile
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
         )}
         </div>
       </main>

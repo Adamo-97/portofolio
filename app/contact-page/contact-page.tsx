@@ -1,7 +1,7 @@
 // app/contact-page/page.tsx
 "use client";
 import type { NextPage } from "next";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Variants, Transition } from "framer-motion";
 
@@ -11,7 +11,21 @@ import Stage16x9 from "@/components/Stage16x9";
 import PhotoSocialContainer from "@/components/contact/photo-social-container";
 import EmailForm from "@/components/contact/email-form";
 
+const BRAND = "#18a1fd";
+const RGB = "24,161,253";
+const PARTICLES_DESKTOP = 220;
+const PARTICLES_MOBILE = 120;
+const SPEED_MULT = 1.6;
+const TWINKLE_RATE = 1.4;
+const DPR_CAP = 1.75;
+const MAX_FPS = 45;
+
 const ContactPage: NextPage = () => {
+  const [showParticles, setShowParticles] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
+
   const handleSend = useCallback(async ({ name, email, message, files }: {
     name: string; email: string; message: string; files: File[];
   }) => {
@@ -29,6 +43,130 @@ const ContactPage: NextPage = () => {
       return false;
     }
   }, []);
+
+  // Show particles after mount
+  useEffect(() => {
+    setTimeout(() => setShowParticles(true), 300);
+  }, []);
+
+  // Particle animation
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctxMaybe = canvas.getContext("2d");
+    if (!ctxMaybe) return;
+
+    const cnv: HTMLCanvasElement = canvas;
+    const ctx: CanvasRenderingContext2D = ctxMaybe;
+
+    const dpr = Math.min(DPR_CAP, Math.max(1, window.devicePixelRatio || 1));
+    const prefersReduce =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+
+    const parent = cnv.parentElement;
+    if (!parent) return;
+
+    const vw = () => Math.max(1, parent.clientWidth || window.innerWidth);
+    const vh = () => Math.max(1, parent.clientHeight || window.innerHeight);
+
+    const P_BASE = window.innerWidth <= 675 ? PARTICLES_MOBILE : PARTICLES_DESKTOP;
+    const densityAdj = window.innerWidth > 1920 ? 0.85 : 1;
+    const P = prefersReduce
+      ? Math.floor(P_BASE * 0.6 * densityAdj)
+      : Math.floor(P_BASE * densityAdj);
+
+    type Dot = { x: number; y: number; r: number; a: number; sp: number; ph: number };
+    let dots: Dot[] = [];
+    let running = !prefersReduce;
+
+    function resize() {
+      const w = vw();
+      const h = vh();
+      cnv.width = w * dpr;
+      cnv.height = h * dpr;
+      cnv.style.width = w + "px";
+      cnv.style.height = h + "px";
+      ctx.scale(dpr, dpr);
+    }
+
+    function init() {
+      const w = vw();
+      const h = vh();
+      dots = [];
+      for (let i = 0; i < P; i++) {
+        const r = 0.8 + Math.random() * 1.6;
+        dots.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r,
+          a: Math.random() * 0.7 + 0.2,
+          sp: (0.1 + Math.random() * 0.3) * SPEED_MULT,
+          ph: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function draw(now: number) {
+      const w = vw();
+      const h = vh();
+      const dt = Math.min(1000 / MAX_FPS, now - lastTimeRef.current);
+      lastTimeRef.current = now;
+
+      ctx.clearRect(0, 0, w, h);
+
+      for (let i = 0; i < dots.length; i++) {
+        const d = dots[i];
+        d.y += d.sp * (dt / 16);
+        if (d.y > h + 10) {
+          d.y = -10;
+          d.x = Math.random() * w;
+        }
+
+        d.ph += (0.02 * TWINKLE_RATE * dt) / 16;
+        const tw = Math.sin(d.ph) * 0.5 + 0.5;
+        const alpha = d.a * tw;
+
+        ctx.fillStyle = `rgba(${RGB},${alpha})`;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (running) rafRef.current = requestAnimationFrame(draw);
+    }
+
+    resize();
+    init();
+    lastTimeRef.current = performance.now();
+    if (!prefersReduce) rafRef.current = requestAnimationFrame(draw);
+
+    const handleResize = () => {
+      resize();
+      init();
+    };
+    window.addEventListener("resize", handleResize);
+
+    const handleVisChange = () => {
+      running = !document.hidden && !prefersReduce;
+      if (running && rafRef.current === null) {
+        lastTimeRef.current = performance.now();
+        rafRef.current = requestAnimationFrame(draw);
+      } else if (!running && rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisChange);
+
+    return () => {
+      running = false;
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("resize", handleResize);
+      document.removeEventListener("visibilitychange", handleVisChange);
+    };
+  }, []);
+
   const prefersReducedMotion = useReducedMotion();
   const springy: Transition = { type: "spring", stiffness: 260, damping: 26, mass: 0.9 };
   const parent: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.15, delayChildren: 0.05 } } };
@@ -43,9 +181,29 @@ const ContactPage: NextPage = () => {
 
   return (
     <div className="w-full min-h-screen relative [background:linear-gradient(128deg,_rgba(0,_0,_0,_0),_rgba(24,_161,_253,_0.15)),_linear-gradient(74.23deg,_rgba(24,_161,_253,_0.05),_rgba(0,_0,_0,_0)),_#000] overflow-hidden flex flex-col">
+      {/* Fog gradients */}
+      <div 
+        className="pointer-events-none fixed top-[-10%] left-[-5%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full opacity-20 blur-[80px] z-0"
+        style={{ background: `radial-gradient(circle, ${BRAND} 0%, transparent 70%)` }}
+        aria-hidden="true" 
+      />
+      <div 
+        className="pointer-events-none fixed bottom-[-10%] right-[-5%] w-[50vw] h-[50vw] max-w-[600px] max-h-[600px] rounded-full opacity-20 blur-[80px] z-0"
+        style={{ background: `radial-gradient(circle, ${BRAND} 0%, transparent 70%)` }}
+        aria-hidden="true" 
+      />
+
+      {/* Particle canvas */}
+      <canvas 
+        ref={canvasRef} 
+        className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-[800ms] ease-out" 
+        style={{ opacity: showParticles ? 1 : 0 }}
+        aria-hidden="true" 
+      />
+
       <Header />
 
-      <main className="flex-1 min-h-0 px-4 sm:px-6 lg:grid lg:place-items-center">
+      <main className="flex-1 min-h-0 px-4 sm:px-6 lg:grid lg:place-items-center relative z-10">
         {/* Mobile block */}
         <div className="lg:hidden py-6 grid place-items-center">
           <div className="w-full">

@@ -233,8 +233,7 @@ const HomePage: NextPage = () => {
 
               <DownloadCvButton
                 className="absolute left-1/2 -translate-x-1/2 bottom-6 z-40"
-                href="/cv.pdf"
-                downloadAttr
+                href="/api/cv"
                 downloadCV="Download CV"
                 iconPlaceholder="/home/icon-placeholder.svg"
                 show={showCvBtn}       

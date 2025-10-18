@@ -179,7 +179,7 @@ export default function RoadmapPage() {
 
       {/* Slide area = remaining viewport */}
       <main
-        className="relative flex-1 min-h-0 overflow-hidden px-[120px] mq750:px-[60px] mq450:px-5 grid place-items-center"
+        className="relative flex-1 min-h-0 overflow-hidden px-[120px] pb-8 mq750:px-[60px] mq450:px-5 mq450:pb-6 grid place-items-center"
         // Fog derived from #18a1fd
         style={{
           backgroundImage: `

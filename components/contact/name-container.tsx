@@ -113,20 +113,32 @@ const NameContainer: NextPage<Props> = ({
         </label>
       )}
 
-      <input
-        id={id}
-        {...inputProps}
-        required={required}
-        className={[
-          "border-steelblue border-solid border-[1px] bg-darkslategray",
-          "w-full [outline:none] shadow-[0_4px_4px_rgba(0,0,0,0.25)]",
-          "font-urbanist font-bold text-lg text-gray-200", 
-          sizeCls, 
-          inputProps?.className || "",
-        ].join(" ")}
-        placeholder={placeholder}
-        style={typeSectionBorder ? { border: typeSectionBorder } : undefined}
-      />
+      <div className="relative">
+        {/* Glossy top edge */}
+        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-t-[inherit] pointer-events-none z-10" />
+        
+        <input
+          id={id}
+          {...inputProps}
+          required={required}
+          className={[
+            "relative border-[2px] border-cornflowerblue-100/30 bg-[#0f1729]",
+            "w-full [outline:none]",
+            "shadow-[0_4px_20px_rgba(24,161,253,0.15),inset_0_1px_0_rgba(255,255,255,0.1)]",
+            "hover:border-cornflowerblue-100/50 hover:shadow-[0_4px_30px_rgba(24,161,253,0.25),inset_0_1px_0_rgba(255,255,255,0.15)]",
+            "focus:border-cornflowerblue-100/70 focus:shadow-[0_4px_40px_rgba(24,161,253,0.35),inset_0_1px_0_rgba(255,255,255,0.2)]",
+            "transition-all duration-300",
+            "before:absolute before:inset-0 before:rounded-[inherit] before:p-[2px]",
+            "before:bg-gradient-to-br before:from-white/20 before:to-transparent",
+            "before:pointer-events-none before:-z-10",
+            "font-urbanist font-bold text-lg text-white placeholder:text-gray-400", 
+            sizeCls, 
+            inputProps?.className || "",
+          ].join(" ")}
+          placeholder={placeholder}
+          style={typeSectionBorder ? { border: typeSectionBorder } : undefined}
+        />
+      </div>
     </div>
   );
 };

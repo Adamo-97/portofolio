@@ -275,7 +275,6 @@ const EmailForm: NextPage<Props> = ({
           <NameContainer
             id="contact-email"
             titlePlaceholder="Your email"
-            typeSectionBorder="1px solid rgba(0, 68, 130, 0.1)"
             placeholder="Email"
             required
             valueForRequired={email}
@@ -307,10 +306,13 @@ const EmailForm: NextPage<Props> = ({
             )}
           </label>
 
-          <div className="border-steelblue border-solid border-[1px] bg-darkslategray rounded-2xl w-full box-border flex flex-col shadow-[0_4px_4px_rgba(0,0,0,0.25)]">
+          <div className="relative border-[2px] border-cornflowerblue-100/30 bg-[#0f1729] rounded-2xl w-full box-border flex flex-col shadow-[0_4px_20px_rgba(24,161,253,0.15),inset_0_1px_0_rgba(255,255,255,0.1)] hover:border-cornflowerblue-100/50 hover:shadow-[0_4px_30px_rgba(24,161,253,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] focus-within:border-cornflowerblue-100/70 focus-within:shadow-[0_4px_40px_rgba(24,161,253,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-300 overflow-hidden">
+            {/* Glossy top edge effect */}
+            <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+            
             <textarea
               id="contact-message"
-              className="w-full resize-none bg-transparent border-0 h-[150px] sm:h-[180px] px-5 pt-3.5 pb-3 font-urbanist font-bold text-lg text-gray-200 [outline:none]"
+              className="w-full resize-none bg-transparent border-0 h-[150px] sm:h-[180px] px-5 pt-3.5 pb-3 font-urbanist font-bold text-lg text-white placeholder:text-gray-400 [outline:none]"
               placeholder="Message"
               value={message}
               maxLength={MESSAGE_MAX}
