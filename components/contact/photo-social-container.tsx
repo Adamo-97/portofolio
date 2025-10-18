@@ -168,7 +168,7 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
               >
                 <div className="w-full h-full pt-3 px-3">
                   <Image
-                    src="/photo-thumbsup@2x.png"
+                    src="/contact/photo-thumbsup@2x.png"
                     alt=""
                     width={416}
                     height={426}

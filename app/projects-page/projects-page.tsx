@@ -1,163 +1,289 @@
 "use client";
-import type { NextPage } from "next";
-import { useCallback } from "react";
-import Image from "next/image";
+import React, { useEffect, useRef, useState } from "react";
 import Header from "@/components/header";
+import { type Project } from "@/components/project/ProjectCard";
+import CategoryFolder, { CATEGORY_COLORS } from "@/components/project/CategoryFolder";
+import ProjectCard from "@/components/project/ProjectCard";
 
-const ProjectsPage: NextPage = () => {
+const BRAND = "#18a1fd";
+const RGB = "24,161,253";
+const PARTICLES_DESKTOP = 220;
+const PARTICLES_MOBILE = 120;
+const SPEED_MULT = 1.6;
+const TWINKLE_RATE = 1.4;
+const DPR_CAP = 1.75;
+const MAX_FPS = 45;
+
+const ProjectsPageClient: React.FC = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
+
+  // Fetch projects from API
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch("/api/project");
+        if (!res.ok) {
+          throw new Error("Failed to fetch projects");
+        }
+        const data = await res.json();
+        setProjects(data);
+        
+        // Set first category as open by default
+        if (data.length > 0) {
+          const firstCategory = data[0].category;
+          setOpenCategory(firstCategory);
+        }
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+        setError("Failed to load projects. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  // Group projects by category
+  const projectsByCategory = projects.reduce((acc, project) => {
+    if (!acc[project.category]) {
+      acc[project.category] = [];
+    }
+    acc[project.category].push(project);
+    return acc;
+  }, {} as Record<string, Project[]>);
+
+  // Particle animation (from roadmap page)
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctxMaybe = canvas.getContext("2d");
+    if (!ctxMaybe) return;
+
+    const cnv: HTMLCanvasElement = canvas;
+    const ctx: CanvasRenderingContext2D = ctxMaybe;
+
+    const dpr = Math.min(DPR_CAP, Math.max(1, window.devicePixelRatio || 1));
+    const prefersReduce =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+
+    const parent = cnv.parentElement;
+    if (!parent) return;
+
+    const vw = () => Math.max(1, parent.clientWidth || window.innerWidth);
+    const vh = () => Math.max(1, parent.clientHeight || window.innerHeight);
+
+    const P_BASE = window.innerWidth <= 675 ? PARTICLES_MOBILE : PARTICLES_DESKTOP;
+    const densityAdj = window.innerWidth > 1920 ? 0.85 : 1;
+    const P = prefersReduce
+      ? Math.floor(P_BASE * 0.6 * densityAdj)
+      : Math.floor(P_BASE * densityAdj);
+
+    type Dot = { x: number; y: number; r: number; a: number; sp: number; ph: number };
+    let dots: Dot[] = [];
+    let running = !prefersReduce;
+
+    function resize() {
+      const w = vw();
+      const h = vh();
+      cnv.width = Math.floor(w * dpr);
+      cnv.height = Math.floor(h * dpr);
+      cnv.style.width = w + "px";
+      cnv.style.height = h + "px";
+
+      dots = Array.from({ length: P }, () => ({
+        x: Math.random() * cnv.width,
+        y: Math.random() * cnv.height,
+        r: (0.6 + Math.random() * 1.8) * dpr,
+        a: 0.15 + Math.random() * 0.45,
+        sp: (0.25 + Math.random() * 0.7) * (prefersReduce ? 0 : 1),
+        ph: Math.random() * Math.PI * 2,
+      }));
+    }
+
+    function draw(ts: number) {
+      const now = performance.now();
+      const elapsed = now - (lastTimeRef.current || 0);
+      if (elapsed < 1000 / MAX_FPS) {
+        rafRef.current = requestAnimationFrame(draw);
+        return;
+      }
+      lastTimeRef.current = now;
+
+      ctx.clearRect(0, 0, cnv.width, cnv.height);
+
+      for (const d of dots) {
+        d.y += d.sp * 0.6 * dpr * SPEED_MULT;
+        d.x += Math.sin((ts * 0.0003 * SPEED_MULT + d.ph) * 0.6) * 0.2 * dpr;
+
+        if (d.y > cnv.height + 8 * dpr) {
+          d.y = -8 * dpr;
+          d.x = Math.random() * cnv.width;
+        }
+
+        const tw = prefersReduce ? 0 : (Math.sin(ts * 0.001 * TWINKLE_RATE + d.ph) + 1) * 0.5;
+        const alpha = Math.min(1, Math.max(0, d.a * (0.5 + tw * 0.7)));
+
+        const grd = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r * 2.2);
+        grd.addColorStop(0, `rgba(${RGB},${alpha})`);
+        grd.addColorStop(1, `rgba(${RGB},0)`);
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r * 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (running) rafRef.current = requestAnimationFrame(draw);
+    }
+
+    const ro = new ResizeObserver(resize);
+    ro.observe(parent);
+    resize();
+
+    if (!prefersReduce) {
+      running = true;
+      lastTimeRef.current = 0;
+      rafRef.current = requestAnimationFrame(draw);
+    } else {
+      draw(0);
+    }
+
+    const onVis = () => {
+      if (prefersReduce) return;
+      if (document.hidden) {
+        running = false;
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      } else {
+        running = true;
+        lastTimeRef.current = 0;
+        rafRef.current = requestAnimationFrame(draw);
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      ro.disconnect();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
   return (
-    <div className="w-full h-[900px] relative shadow-[0px_4px_4px_rgba(0,_0,_0,_0.25)] [background:linear-gradient(129.23deg,_rgba(0,_0,_0,_0),_rgba(24,_161,_253,_0.15)),_linear-gradient(77.08deg,_rgba(24,_161,_253,_0.15),_rgba(0,_0,_0,_0)),_#000] overflow-hidden flex flex-col items-start justify-start gap-[30px] min-w-[1000px] leading-[normal] tracking-[normal] mq675:h-auto">
+    <div className="bg-black flex flex-col overflow-hidden h-screen">
       <Header />
-      <main className="self-stretch overflow-hidden flex flex-col items-center justify-start pt-9 px-[117px] pb-[100px] gap-[9px] text-center text-xs text-cornflowerblue-100 font-urbanist mq450:pt-5 mq450:px-5 mq450:pb-[42px] mq450:box-border mq750:pt-[23px] mq750:px-[58px] mq750:pb-[65px] mq750:box-border">
-        <header className="self-stretch flex flex-row items-center justify-start pt-2.5 px-0 pb-[30px] gap-2.5 mq675:flex-wrap">
-          <div className="h-[53px] rounded-[50px] overflow-hidden flex flex-row items-center justify-center">
-            <button className="cursor-pointer border-lightgray border-solid border-[0.5px] py-[9px] px-[19px] bg-cornflowerblue-100 rounded-[60px] overflow-hidden flex flex-row items-center justify-center gap-3 hover:bg-cornflowerblue-200 hover:border-silver hover:border-solid hover:hover:border-[0.5px] hover:box-border">
-              <div className="relative text-[15px] tracking-[-0.01em] font-medium font-urbanist text-white text-left">
-                All
-              </div>
-              <Image
-                className="w-6 relative h-6 hidden"
-                width={24}
-                height={24}
-                sizes="100vw"
-                alt=""
-                src="/send-icon.svg"
-              />
-            </button>
-          </div>
-          <div className="h-[53px] rounded-[50px] overflow-hidden flex flex-row items-center justify-center">
-            <button className="cursor-pointer border-lightgray border-solid border-[0.5px] py-[9px] px-[19px] bg-cornflowerblue-400 rounded-[60px] overflow-hidden flex flex-row items-center justify-center gap-[11px] hover:bg-cornflowerblue-300 hover:border-silver hover:border-solid hover:hover:border-[0.5px] hover:box-border">
-              <div className="relative text-[15px] tracking-[-0.01em] font-medium font-urbanist text-white text-left">
-                Web
-              </div>
-              <Image
-                className="w-[18px] max-h-full"
-                width={18}
-                height={20}
-                sizes="100vw"
-                alt=""
-                src="/icon-placeholder4.svg"
-              />
-            </button>
-          </div>
-          <div className="h-[53px] rounded-[50px] overflow-hidden flex flex-row items-center justify-center">
-            <button className="cursor-pointer border-lightgray border-solid border-[0.5px] py-[9px] px-[19px] bg-cornflowerblue-400 rounded-[60px] overflow-hidden flex flex-row items-center justify-center gap-3 hover:bg-cornflowerblue-300 hover:border-silver hover:border-solid hover:hover:border-[0.5px] hover:box-border">
-              <div className="relative text-[15px] tracking-[-0.01em] font-medium font-urbanist text-white text-left">
-                Mobile
-              </div>
-              <Image
-                className="w-[11px] max-h-full"
-                width={11}
-                height={20}
-                sizes="100vw"
-                alt=""
-                src="/icon-placeholder3.svg"
-              />
-            </button>
-          </div>
-          <div className="h-[53px] rounded-[50px] overflow-hidden flex flex-row items-center justify-center">
-            <button className="cursor-pointer border-lightgray border-solid border-[0.5px] py-[9px] px-[19px] bg-cornflowerblue-400 rounded-[60px] overflow-hidden flex flex-row items-center justify-center gap-3 hover:bg-cornflowerblue-300 hover:border-silver hover:border-solid hover:hover:border-[0.5px] hover:box-border">
-              <div className="relative text-[15px] tracking-[-0.01em] font-medium font-urbanist text-white text-left">
-                Systems
-              </div>
-              <Image
-                className="w-5 max-h-full"
-                width={20}
-                height={20}
-                sizes="100vw"
-                alt=""
-                src="/icon-placeholder2.svg"
-              />
-            </button>
-          </div>
-        </header>
-        <section className="w-[1176px] h-[508px] flex flex-row items-center justify-between gap-0 text-left text-5xl text-cornflowerblue-100 font-urbanist">
-          <div className="w-[588px] flex flex-col items-start justify-start gap-8 mq675:gap-4">
-            <h1 className="m-0 self-stretch relative text-[length:inherit] leading-[72px] font-bold font-[inherit] mq450:text-[29px] mq450:leading-[43px] mq750:text-[38px] mq750:leading-[58px]">
-              ChatNPT
-            </h1>
-            <h1 className="m-0 self-stretch relative text-2xl leading-[150%] font-normal font-[inherit] text-white mq450:text-[19px] mq450:leading-[29px]">
-              An AI-powered assistant integrated with NKT’s internal API,
-              enabling smarter queries and analytics through Large Language
-              Models.
-            </h1>
-          </div>
-          <div className="flex flex-row items-end justify-end relative gap-2.5">
-            <Image
-              className="w-[416px] relative h-[508px] z-[0]"
-              width={416}
-              height={508}
-              sizes="100vw"
-              alt=""
-              src="/cards-container.svg"
-            />
-            <Image
-              className="h-[114px] w-[114px] !!m-[0 important] absolute top-[394px] left-[302px] rounded-[57px] object-contain z-[1]"
-              loading="lazy"
-              width={114}
-              height={114}
-              sizes="100vw"
-              alt=""
-              src="/git-button@2x.png"
-            />
-          </div>
-        </section>
-        <div className="self-stretch flex flex-row items-center justify-center pt-5 px-0 pb-0 gap-8 mq450:gap-4 mq450:flex-wrap">
-          <Image
-            className="h-[15.3px] w-[7.6px] relative object-contain"
-            loading="lazy"
-            width={7.6}
-            height={15.3}
-            sizes="100vw"
-            alt=""
-            src="/prev-button.svg"
-          />
-          <div className="h-[26.7px] w-[291.6px] flex flex-row items-start justify-start gap-[22.9px]">
-            <div className="h-[26.7px] w-[26.7px] relative">
-              <button className="cursor-pointer [border:none] p-0 bg-white absolute top-[0px] left-[0px] rounded-[50%] w-full h-full" />
-              <div className="absolute top-[6.7px] left-[6.7px] leading-[12.4px] flex items-end justify-center z-[1]">
-                1
-              </div>
-            </div>
-            <div className="flex flex-col items-start justify-start pt-[6.7px] px-0 pb-0 text-dimgray">
-              <div className="flex flex-row items-start justify-start gap-6">
-                <div className="w-3.5 relative flex items-end justify-center">
-                  2
-                </div>
-                <div className="w-3.5 relative flex items-end justify-center">
-                  3
-                </div>
-                <div className="w-3.5 relative flex items-end justify-center">
-                  4
-                </div>
-                <div className="w-3.5 relative flex items-end justify-center">
-                  5
-                </div>
-                <div className="w-3.5 relative flex items-end justify-center">
-                  6
-                </div>
-                <div className="w-3.5 relative flex items-end justify-center">
-                  7
-                </div>
-                <div className="w-3.5 relative flex items-end justify-center">
-                  8
-                </div>
-              </div>
+
+      {/* Main area with fog/glow background */}
+      <main
+        className="relative flex-1 min-h-0 overflow-hidden px-4 sm:px-6 md:px-8 lg:px-12 py-6 md:py-8 flex flex-col"
+        style={{
+          backgroundImage: `
+            radial-gradient(95% 90% at 10% 100%, rgba(${RGB},0.38) 0%, rgba(${RGB},0.22) 32%, rgba(${RGB},0.10) 58%, rgba(0,0,0,0) 82%),
+            radial-gradient(95% 90% at 90% 100%, rgba(${RGB},0.38) 0%, rgba(${RGB},0.22) 32%, rgba(${RGB},0.10) 58%, rgba(0,0,0,0) 82%),
+            radial-gradient(70% 65% at 18% 100%, rgba(${RGB},0.18) 0%, rgba(${RGB},0.10) 45%, rgba(0,0,0,0) 78%),
+            radial-gradient(70% 65% at 82% 100%, rgba(${RGB},0.18) 0%, rgba(${RGB},0.10) 45%, rgba(0,0,0,0) 78%),
+            linear-gradient(#000, #000)
+          `,
+          backgroundRepeat: "no-repeat, no-repeat, no-repeat, no-repeat, no-repeat",
+          backgroundSize: "110vw 90vh, 110vw 90vh, 80vw 65vh, 80vw 65vh, 100% 100%",
+          backgroundPosition:
+            "left -20vw bottom -16vh, right -20vw bottom -16vh, left -8vw bottom -8vh, right -8vw bottom -8vh, center",
+        }}
+      >
+        {/* Particle canvas */}
+        <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0" aria-hidden="true" />
+
+        {/* Content above particles - NO SCROLLING */}
+        <div className="relative z-10 flex flex-col h-full max-w-[1800px] mx-auto w-full overflow-hidden">
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="text-6xl mb-4 animate-bounce">📁</div>
+              <p className="text-white/70 text-lg">Loading projects...</p>
             </div>
           </div>
-          <Image
-            className="h-[15.3px] w-[7.6px] relative"
-            loading="lazy"
-            width={7.6}
-            height={15.3}
-            sizes="100vw"
-            alt=""
-            src="/next-button.svg"
-          />
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <p className="text-red-400 text-lg mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-cornflowerblue-100 hover:bg-cornflowerblue-200 text-white font-medium rounded-full transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && projects.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-cornflowerblue-100 mb-2">
+                No projects found
+              </h3>
+              <p className="text-white/70">
+                No projects available at the moment.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Category Folders */}
+        {!loading && !error && projects.length > 0 && (
+          <div className="flex flex-col items-center gap-8 sm:gap-10 lg:gap-12 px-2 sm:px-4 h-full">
+            {/* All categories in a single horizontal row - NO WRAP, responsive */}
+            <div className="flex gap-2 sm:gap-3 lg:gap-4 justify-center pb-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
+              {Object.entries(projectsByCategory).map(([category, categoryProjects], index) => (
+                <CategoryFolder
+                  key={category}
+                  category={category}
+                  projects={categoryProjects}
+                  index={index}
+                  isOpen={openCategory === category}
+                  onToggle={() => setOpenCategory(category)}
+                />
+              ))}
+            </div>
+            
+            {/* Horizontal Projects Display - NO SCROLLING, Responsive scale */}
+            {openCategory && projectsByCategory[openCategory] && (
+              <div className="w-full flex justify-center items-start flex-1 min-h-0">
+                <div className="flex gap-2 sm:gap-3 lg:gap-4 justify-center items-start flex-wrap" style={{ 
+                  maxWidth: '100%',
+                }}>
+                  {projectsByCategory[openCategory].map((project, idx) => (
+                    <ProjectCard 
+                      key={project.id} 
+                      project={project} 
+                      index={idx}
+                      categoryColor={CATEGORY_COLORS[openCategory]}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         </div>
       </main>
     </div>
   );
 };
 
-export default ProjectsPage;
+export default ProjectsPageClient;
