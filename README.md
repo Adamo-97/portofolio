@@ -34,7 +34,7 @@ Comprehensive documentation is available in the `/docs` folder:
 
 ### Prerequisites
 
-- Node.js 20+ 
+- Node.js 20+
 - npm or yarn
 - Supabase account
 - SMTP credentials (Gmail, SendGrid, etc.)
@@ -42,19 +42,21 @@ Comprehensive documentation is available in the `/docs` folder:
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/Adamo-97/portofolio.git
    cd portofolio
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
-   
    Create `.env.local` in the root directory:
+
    ```bash
    # Supabase
    SUPABASE_URL=https://your-project.supabase.co
@@ -69,22 +71,23 @@ Comprehensive documentation is available in the `/docs` folder:
    ```
 
 4. **Set up Supabase**
-   
+
    - Create tables using schemas in [`docs/DATABASE.md`](./docs/DATABASE.md)
    - Create storage bucket `cv-icons` (public)
    - Upload your CV to `cv-icons/cv/CV.pdf`
    - Populate initial data (skills, projects, roadmap)
 
 5. **Run development server**
+
    ```bash
    npm run dev
    ```
-   
+
    Open [http://localhost:3000](http://localhost:3000)
 
 ## 📁 Project Structure
 
-```
+``` bash
 portofolio/
 ├── app/                      # Next.js App Router
 │   ├── api/                 # API routes (serverless functions)
@@ -111,36 +114,45 @@ portofolio/
 ## 🎨 Pages
 
 ### Home (`/`)
+
 Landing page with introduction, animated greetings, and CV download button.
 
 ### Skills (`/skills-page`)
+
 Technical skills organized by categories with proficiency indicators.
 
 ### Projects (`/projects-page`)
+
 Portfolio projects with filtering, GitHub links, and technology tags.
+
 - **Desktop:** Folder-style categories, dynamic scaling
 - **Mobile:** 3×2 grid, horizontal category scroll
 
 ### Roadmap (`/roadmap-page`)
+
 Career timeline with education, experience, and achievements.
 
 ### Contact (`/contact-page`)
+
 Contact form with email integration, validation, and rate limiting.
 
 ## 🔧 Tech Stack
 
 ### Frontend
+
 - **Next.js 15** - React framework with App Router
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Utility-first styling
 - **Framer Motion** - Animations
 
 ### Backend
+
 - **Supabase** - PostgreSQL database + Storage
 - **Nodemailer** - Email sending
 - **Next.js API Routes** - Serverless endpoints
 
 ### Development
+
 - **ESLint** - Code linting
 - **VS Code** - Recommended editor
 
@@ -235,7 +247,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Website** - [https://yoursite.com](https://yoursite.com)
 
 **GitHub** - [@Adamo-97](https://github.com/Adamo-97)
-
----
-
-**Built with ❤️ using Next.js, TypeScript, and Tailwind CSS**
