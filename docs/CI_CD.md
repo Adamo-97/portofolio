@@ -123,6 +123,7 @@ npm run test:ci
 Set these in your GitHub repository: **Settings → Secrets and variables → Actions**
 
 #### Supabase (Required)
+
 ```
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key-here
