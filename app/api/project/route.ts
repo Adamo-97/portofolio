@@ -2,7 +2,10 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/backend/supabaseClient";
 
-export const revalidate = 0;
+// Cache projects for 30 minutes (updated less frequently)
+export const revalidate = 1800;
+// Mark as dynamic since we use query parameters
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {

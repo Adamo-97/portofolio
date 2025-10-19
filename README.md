@@ -6,6 +6,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.1.3-38bdf8?logo=tailwind-css)](https://tailwindcss.com/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e?logo=supabase)](https://supabase.com/)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=github-actions)](https://github.com/features/actions)
+[![Tests](https://img.shields.io/badge/Tests-17_passing-success?logo=jest)](https://jestjs.io/)
 
 ## ✨ Features
 
@@ -18,6 +20,8 @@
 - 🎯 **SEO Friendly** - Meta tags, sitemap, robots.txt
 - ♿ **Accessible** - WCAG AA compliant, keyboard navigation, screen reader support
 - 🌙 **Dark Theme** - Elegant dark mode design with cornflowerblue accents
+- 🧪 **Automated Testing** - Jest + React Testing Library with 17 tests
+- 🚀 **CI/CD Pipeline** - GitHub Actions with automated deployment to Vercel
 
 ## 📚 Documentation
 
@@ -29,6 +33,9 @@ Comprehensive documentation is available in the `/docs` folder:
 - **[Styling](./docs/STYLING.md)** - Design system, styling patterns, animations
 - **[Deployment](./docs/DEPLOYMENT.md)** - Deployment guide for Vercel, Netlify, self-hosted
 - **[CV Setup](./docs/CV_SETUP.md)** - How to configure CV download from Supabase
+- **[CI/CD Pipeline](./docs/CI_CD.md)** - GitHub Actions workflows, pipeline configuration
+- **[Testing Guide](./docs/TESTING.md)** - How to write and run tests
+- **[Setup Summary](./docs/SETUP_SUMMARY.md)** - CI/CD and testing setup overview
 
 ## 🚀 Quick Start
 

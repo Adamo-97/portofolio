@@ -13,7 +13,6 @@ export type UISkill = {
 };
 
 export function SkillCard({
-  categoryKey,
   title,
   blurb,
   items,

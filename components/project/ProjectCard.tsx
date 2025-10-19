@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export interface Project {
   id: string;
@@ -116,10 +117,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index = 0, categoryC
               // Mobile: Fixed aspect ratio container
               <div className="w-full aspect-[4/3] bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-md flex items-center justify-center overflow-hidden p-1">
                 {project.cover_image_url ? (
-                  <img
+                  <Image
                     src={project.cover_image_url}
                     alt={project.title}
+                    width={400}
+                    height={300}
                     className="max-w-full max-h-full object-contain"
+                    unoptimized
                   />
                 ) : (
                   <div className="text-white/30 text-[8px]">No image</div>
@@ -129,10 +133,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, index = 0, categoryC
               // Desktop: Original sizing
               <div className="w-full h-[85px] sm:h-[100px] lg:h-[120px] bg-white/10 backdrop-blur-sm rounded-lg border-2 border-white/20 flex items-center justify-center overflow-hidden p-2.5 sm:p-3">
                 {project.cover_image_url ? (
-                  <img
+                  <Image
                     src={project.cover_image_url}
                     alt={project.title}
+                    width={400}
+                    height={300}
                     className="max-w-full max-h-full object-contain"
+                    unoptimized
                   />
                 ) : (
                   <div className="text-white/30 text-[10px] sm:text-xs">No image</div>

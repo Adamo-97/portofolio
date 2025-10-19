@@ -17,7 +17,9 @@ export async function GET() {
     const bucketName = "cv-icons"; // Your Supabase storage bucket name
     const filePath = "cv/CV.pdf"; // Path to CV file in the bucket
 
-    console.log("[/api/cv] Attempting to download from:", bucketName, filePath);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[/api/cv] Attempting to download from:", bucketName, filePath);
+    }
 
     // Get the file from Supabase Storage
     const { data, error } = await supabase.storage
@@ -40,7 +42,9 @@ export async function GET() {
       );
     }
 
-    console.log("[/api/cv] File downloaded successfully, size:", data.size, "type:", data.type);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("[/api/cv] File downloaded successfully, size:", data.size, "type:", data.type);
+    }
 
     // Check if the downloaded file is actually a PDF
     if (!data.type.includes('pdf') && !data.type.includes('octet-stream')) {

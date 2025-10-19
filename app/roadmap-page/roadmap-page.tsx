@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import Header from "@/components/header";
 import StreetTimeline, { type RoadmapItem } from "@/components/roadmap/StreetTimeline";
-import { motion } from "framer-motion";
 import LoadingAnimation from "@/components/LoadingAnimation";
 
 type ApiItem = { id: string; title: string; description: string; icon?: string; from: string; to?: string | null };
@@ -219,7 +218,7 @@ export default function RoadmapPage() {
             iconSize={96}
             autoScale
             // Keep natural height; only cap so it never overflows the slide.
-            // @ts-ignore
+            // @ts-expect-error - style prop is not in type definition but works fine
             style={{ width: "100%", height: "auto", maxHeight: "100%", overflow: "visible" }}
           />
         </div>

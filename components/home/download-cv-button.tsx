@@ -33,7 +33,6 @@ export default function DownloadCvButton({
   downloadCV = "Download CV",
   iconPlaceholder,
   href,
-  downloadAttr = false,
   downloadCvButtonHeight,
   iconPlaceholderWidth,
   iconPlaceholderHeight,

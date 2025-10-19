@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import ProjectCard, { type Project } from "./ProjectCard";
+import { motion } from "framer-motion";
+import { type Project } from "./ProjectCard";
 
 interface CategoryFolderProps {
   category: string;

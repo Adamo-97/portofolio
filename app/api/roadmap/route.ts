@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/backend/supabaseClient";
 
+// Cache roadmap data for 2 hours (rarely changes)
+export const revalidate = 7200;
+
 export async function GET() {
   // 1) get newest 5 by start_date that are not in the future
   const nowIso = new Date().toISOString();

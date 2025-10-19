@@ -216,13 +216,13 @@ const PhotoSocialContainer: NextPage<PhotoSocialContainerType> = ({
                         >
                           {looksLikeUrl(v) ? (
                             // URL or data: URL
-                            <img
+                            <Image
                               src={v}
                               alt=""
+                              width={30}
+                              height={30}
                               className="h-[30px] w-auto select-none pointer-events-none"
-                              decoding="async"
-                              loading="lazy"
-                              referrerPolicy="no-referrer"
+                              unoptimized
                             />
                           ) : v.startsWith("<svg") ? (
                             <span

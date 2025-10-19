@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 type Props = {
@@ -83,17 +83,17 @@ export default function RouteScrollNavigator({
   const touchYRef = useRef<number | null>(null);
 
   // Helpers -------------------------------------------------------
-  const goTo = (i: number) => {
+  const goTo = useCallback((i: number) => {
     if (i < 0 || i >= routes.length || i === index) return;
     router.push(routes[i]);
-  };
+  }, [index, routes, router]);
 
-  const cooldown = () => {
+  const cooldown = useCallback(() => {
     const now = performance.now();
     if (now - lastAtRef.current < cooldownMs) return true;
     lastAtRef.current = now;
     return false;
-  };
+  }, [cooldownMs]);
 
   // Only navigate if no scrollable ancestor can consume this scroll in that direction
   const canAncestorScrollInDirection = (target: EventTarget | null, deltaY: number) => {
@@ -199,7 +199,7 @@ export default function RouteScrollNavigator({
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [enabled, index, routes, wheelThreshold, touchThreshold, cooldownMs]);
+  }, [enabled, index, routes, wheelThreshold, touchThreshold, cooldownMs, cooldown, goTo]);
 
   return null;
 }

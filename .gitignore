@@ -30,6 +30,13 @@ yarn-error.log*
 
 # vercel
 .vercel
+.vercel/
 
 # typescript
 *.tsbuildinfo
+next-env.d.ts
+
+# test
+coverage/
+*.lcov
+.nyc_output

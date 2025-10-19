@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import RoadLine from "./RoadLine";
 import RoadNode, { type RoadmapItem } from "./RoadNode";
 
@@ -126,7 +127,7 @@ export default function StreetTimeline({
                     {/* Compact icon */}
                     {it.icon && (
                       <div className="relative flex-shrink-0 w-9 h-9 rounded-lg p-1">
-                        <img src={it.icon} alt="" className="w-full h-full object-contain" />
+                        <Image src={it.icon} alt="" width={36} height={36} className="w-full h-full object-contain" unoptimized />
                       </div>
                     )}
 

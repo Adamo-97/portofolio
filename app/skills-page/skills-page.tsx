@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import Header from "@/components/header";
 import SkillsGrid from "@/components/skills/SkillsGrid";
 
-const BRAND = "#18a1fd";
 const RGB = "24,161,253";
 const PARTICLES_DESKTOP = 220;
 const PARTICLES_MOBILE = 120;

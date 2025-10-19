@@ -6,7 +6,6 @@ import CategoryFolder, { CATEGORY_COLORS } from "@/components/project/CategoryFo
 import ProjectCard from "@/components/project/ProjectCard";
 import LoadingAnimation from "@/components/LoadingAnimation";
 
-const BRAND = "#18a1fd";
 const RGB = "24,161,253";
 const PARTICLES_DESKTOP = 220;
 const PARTICLES_MOBILE = 120;

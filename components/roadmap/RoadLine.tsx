@@ -28,8 +28,6 @@ export default function RoadLine({
 
   // 🔹 compute the visible length + how many dash "slots"
   const len = Math.max(0, (vertical ? h : w) - padding * 2);
-  const period = Math.max(1, dash + gap);
-  const steps = Math.max(1, Math.floor(len / period));
 
   const Wrapper =
     mode === "overlay"

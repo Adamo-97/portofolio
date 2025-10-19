@@ -4,7 +4,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useViewportStage } from "./useViewportStage";
 import { SkillCard } from "./SkillCard";
-import { motion } from "framer-motion";
 import LoadingAnimation from "@/components/LoadingAnimation";
 
 const BASE = { cardW: 360, gap: 24, cardRatio: 4 / 3, padY: 40 };

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/backend/supabaseClient";
-export const revalidate = 0;
+
+// Cache skill categories for 1 hour (static data)
+export const revalidate = 3600;
 
 export async function GET() {
   const { data, error } = await supabase

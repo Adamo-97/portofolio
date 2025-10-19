@@ -1,6 +1,7 @@
 "use client";
 import type { NextPage } from "next";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import NameContainer from "@/components/contact/name-container";
 import SendButton from "@/components/contact/SendButton";
 import { isValidEmail, NAME_MAX, EMAIL_MAX, MESSAGE_MAX } from "@/lib/contact/validate";
@@ -246,7 +247,6 @@ const EmailForm: NextPage<Props> = ({
 
   // Render SVGs exactly as provided
   const looksLikeUrl = (v: string) => /^https?:\/\//i.test(v) || /\.svg(\?|#|$)/i.test(v);
-  const looksLikePathD = (v: string) => /^[MmZzLlHhVvCcSsQqTtAa][\d\s,.\-+eE]+/.test(v);
 
   return (
     <section
@@ -450,15 +450,15 @@ const EmailForm: NextPage<Props> = ({
                     className="inline-flex items-center justify-center p-2"
                   >
                     {looksLikeUrl(v) ? (
-                      <img
+                      <Image
                         src={v}
                         alt=""
+                        width={24}
+                        height={24}
                         className="w-6 h-6 select-none pointer-events-none"
-                        decoding="async"
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
+                        unoptimized
                       />
-                    ) : looksLikePathD(v) ? (
+                    ) : v.startsWith("<svg") ? (
                       <svg viewBox={l.viewBox ?? "0 0 24 24"} className="w-6 h-6" aria-hidden="true">
                         <path d={v} />
                       </svg>

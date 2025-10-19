@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/backend/supabaseClient";
 
-// Ensure no static caching; always hit Supabase
-export const revalidate = 0;
+// Cache skills data for 1 hour (skills don't change frequently)
+export const revalidate = 3600;
 
 export async function GET() {
   // Pull all skills; categories are fixed in your UI model
