@@ -28,6 +28,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
+  const runningRef = useRef<boolean>(true); // Use ref instead of local variable
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -62,7 +63,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
     };
 
     let dots: Dot[] = [];
-    let running = !prefersReduce;
+    runningRef.current = !prefersReduce;
 
     const resize = () => {
       const w = vw();
@@ -90,7 +91,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
     resize();
 
     const draw = (now: number) => {
-      if (!running) return;
+      if (!runningRef.current) return;
       
       const dt = Math.min((now - lastTimeRef.current) / 1000, 0.1);
       lastTimeRef.current = now;
@@ -123,16 +124,16 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
         ctx.fill();
       }
 
-      if (running) {
+      if (runningRef.current) {
         rafRef.current = requestAnimationFrame(draw);
       }
     };
 
     const handleResize = () => {
       resize();
-      if (!running && !prefersReduce) {
+      if (!runningRef.current && !prefersReduce) {
         lastTimeRef.current = performance.now();
-        running = true;
+        runningRef.current = true;
         rafRef.current = requestAnimationFrame(draw);
       }
     };
@@ -141,13 +142,13 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
       if (prefersReduce) return;
       
       if (document.hidden) {
-        running = false;
+        runningRef.current = false;
         if (rafRef.current !== null) {
           cancelAnimationFrame(rafRef.current);
           rafRef.current = null;
         }
       } else {
-        running = true;
+        runningRef.current = true;
         lastTimeRef.current = performance.now();
         rafRef.current = requestAnimationFrame(draw);
       }
@@ -158,13 +159,13 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
     
     // Start animation
     if (!prefersReduce) {
-      running = true;
+      runningRef.current = true;
       lastTimeRef.current = performance.now();
       rafRef.current = requestAnimationFrame(draw);
     }
 
     return () => {
-      running = false;
+      runningRef.current = false;
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
       }
