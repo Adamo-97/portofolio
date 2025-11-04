@@ -1,13 +1,13 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "@/components/header";
 import { type Project } from "@/components/project/ProjectCard";
-import CategoryFolder, { CATEGORY_COLORS } from "@/components/project/CategoryFolder";
+import { CATEGORY_COLORS } from "@/components/project/CategoryFolder";
 import ProjectCard from "@/components/project/ProjectCard";
 import LoadingAnimation from "@/components/LoadingAnimation";
-import { ErrorFallback } from "@/components/ErrorBoundary";
 import { apiClient } from "@/lib/utils/fetch-client";
 import ParticleCanvas from "@/components/animations/ParticleCanvas";
+import { motion, AnimatePresence } from "framer-motion";
 
 const ProjectsPageClient: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -15,17 +15,6 @@ const ProjectsPageClient: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [showParticles, setShowParticles] = useState(false);
-  const [viewportKey, setViewportKey] = useState(0); // Force re-render on resize
-
-  // Handle viewport resize for responsive scaling
-  useEffect(() => {
-    const handleResize = () => {
-      setViewportKey(prev => prev + 1);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Fetch projects from API
   useEffect(() => {
@@ -65,13 +54,15 @@ const ProjectsPageClient: React.FC = () => {
     return acc;
   }, {} as Record<string, Project[]>);
 
+  const categories = Object.keys(projectsByCategory);
+
   return (
     <div className="bg-black flex flex-col overflow-hidden h-screen">
       <Header />
 
       {/* Main area with fog/glow background */}
       <main
-        className="relative flex-1 min-h-0 overflow-hidden px-4 sm:px-6 md:px-8 lg:px-12 py-6 md:py-8 flex flex-col"
+        className="relative flex-1 min-h-0 overflow-hidden"
         style={{
           backgroundImage: `
             radial-gradient(95% 90% at 10% 100%, rgba(24,161,253,0.38) 0%, rgba(24,161,253,0.22) 32%, rgba(24,161,253,0.10) 58%, rgba(0,0,0,0) 82%),
@@ -99,166 +90,133 @@ const ProjectsPageClient: React.FC = () => {
         )}
 
         {/* Content above particles - NO SCROLLING */}
-        <div className="relative z-10 flex flex-col h-full max-w-[1800px] mx-auto w-full overflow-hidden">
-        {/* Loading State */}
-        {loading && <LoadingAnimation text="Loading projects..." />}
+        <div className="relative z-10 flex flex-col h-full w-full overflow-hidden">
+          {/* Loading State */}
+          {loading && <LoadingAnimation text="Loading projects..." />}
 
-        {/* Error State */}
-        {error && !loading && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <p className="text-red-400 text-lg mb-4">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-cornflowerblue-100 hover:bg-cornflowerblue-200 text-white font-medium rounded-full transition-colors"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && !error && projects.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-cornflowerblue-100 mb-2">
-                No projects found
-              </h3>
-              <p className="text-white/70">
-                No projects available at the moment.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Category Folders */}
-        {!loading && !error && projects.length > 0 && (
-          <>
-            {/* DESKTOP: Category Folders */}
-            <div className="hidden md:flex flex-col items-center gap-8 sm:gap-10 lg:gap-12 px-2 sm:px-4 pt-6 sm:pt-8 lg:pt-10 h-full">
-              {/* All categories in a single horizontal row - NO WRAP, responsive */}
-              <div className="flex gap-2 sm:gap-3 lg:gap-4 justify-center pb-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
-                {Object.entries(projectsByCategory).map(([category, categoryProjects], index) => (
-                  <CategoryFolder
-                    key={category}
-                    category={category}
-                    projects={categoryProjects}
-                    index={index}
-                    isOpen={openCategory === category}
-                    onToggle={() => setOpenCategory(category)}
-                  />
-                ))}
+          {/* Error State */}
+          {error && !loading && (
+            <div className="flex items-center justify-center h-full px-4">
+              <div className="text-center">
+                <p className="text-red-400 text-lg mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 bg-cornflowerblue-100 hover:bg-cornflowerblue-200 text-white font-medium rounded-full transition-colors"
+                >
+                  Retry
+                </button>
               </div>
-              
-              {/* Horizontal Projects Display - Responsive scale for all screen sizes */}
-              {openCategory && projectsByCategory[openCategory] && (
-                <div className="w-full flex justify-center items-center flex-1 min-h-0 overflow-hidden px-2 sm:px-4">
-                  <div 
-                    className="flex gap-3 sm:gap-4 lg:gap-6 justify-center items-center flex-wrap"
-                    style={{ 
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      transform: (() => {
-                        const count = projectsByCategory[openCategory].length;
-                        const width = window.innerWidth;
-                        const height = window.innerHeight;
-                        
-                        // Base scale on both count and viewport size
-                        let scale = 1;
-                        
-                        // For 720p (1280x720) and similar resolutions
-                        if (height <= 768) {
-                          if (count <= 2) scale = 0.75;
-                          else if (count <= 3) scale = 0.65;
-                          else if (count <= 4) scale = 0.55;
-                          else if (count <= 6) scale = 0.50;
-                          else scale = 0.45;
-                        }
-                        // For 1080p and above
-                        else if (height <= 1080) {
-                          if (count <= 3) scale = 1;
-                          else if (count <= 4) scale = 0.85;
-                          else if (count <= 6) scale = 0.75;
-                          else if (count <= 9) scale = 0.65;
-                          else scale = 0.55;
-                        }
-                        // For larger screens
-                        else {
-                          if (count <= 3) scale = 1;
-                          else if (count <= 6) scale = 0.90;
-                          else if (count <= 9) scale = 0.75;
-                          else scale = 0.65;
-                        }
-                        
-                        // Additional scaling for narrow screens
-                        if (width < 1366) {
-                          scale *= 0.9;
-                        }
-                        
-                        return `scale(${scale})`;
-                      })(),
-                      transformOrigin: 'center',
-                      transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                  >
-                    {projectsByCategory[openCategory].map((project, idx) => (
-                      <ProjectCard 
-                        key={project.id} 
-                        project={project} 
-                        index={idx}
-                        categoryColor={CATEGORY_COLORS[openCategory]}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
+          )}
 
-            {/* MOBILE: Category Buttons + 3x2 Grid */}
-            <div className="md:hidden flex flex-col h-full w-full px-3 py-3">
-              {/* Category Buttons - Single Row */}
-              <div className="flex gap-2 justify-center mb-4 flex-shrink-0">
-                {Object.keys(projectsByCategory).map((category) => {
-                  const isActive = openCategory === category;
-                  const colors = CATEGORY_COLORS[category];
-                  return (
-                    <button
-                      key={category}
-                      onClick={() => setOpenCategory(category)}
-                      className="relative px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300 border"
-                      style={{
-                        backgroundColor: isActive ? `${colors?.accent || '#18a1fd'}30` : 'rgba(255,255,255,0.05)',
-                        borderColor: isActive ? `${colors?.accent || '#18a1fd'}60` : 'rgba(255,255,255,0.1)',
-                        color: isActive ? '#fff' : 'rgba(255,255,255,0.7)',
-                        boxShadow: isActive ? `0 0 15px ${colors?.glow || 'rgba(24,161,253,0.4)'}` : 'none',
-                      }}
+          {/* Empty State */}
+          {!loading && !error && projects.length === 0 && (
+            <div className="flex items-center justify-center h-full px-4">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-cornflowerblue-100 mb-2">
+                  No projects found
+                </h3>
+                <p className="text-white/70">
+                  No projects available at the moment.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Main Content - Responsive Grid Layout */}
+          {!loading && !error && projects.length > 0 && (
+            <div className="h-full flex flex-col px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-3 sm:py-4 md:py-6 gap-3 sm:gap-4 md:gap-5">
+              {/* Category Selector */}
+              <div className="flex-shrink-0">
+                <div className="flex gap-2 sm:gap-2.5 md:gap-3 justify-center flex-wrap max-w-5xl mx-auto">
+                  {categories.map((category) => {
+                    const isActive = openCategory === category;
+                    const colors = CATEGORY_COLORS[category];
+                    const projectCount = projectsByCategory[category].length;
+                    
+                    return (
+                      <motion.button
+                        key={category}
+                        onClick={() => setOpenCategory(category)}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="relative px-3 sm:px-4 md:px-5 lg:px-6 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm md:text-base transition-all duration-300 border-2"
+                        style={{
+                          backgroundColor: isActive ? `${colors?.accent || '#18a1fd'}25` : 'rgba(255,255,255,0.03)',
+                          borderColor: isActive ? `${colors?.accent || '#18a1fd'}` : 'rgba(255,255,255,0.1)',
+                          color: isActive ? '#fff' : 'rgba(255,255,255,0.6)',
+                          boxShadow: isActive ? `0 0 20px ${colors?.glow || 'rgba(24,161,253,0.5)'}` : 'none',
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5 sm:gap-2">
+                          {category}
+                          <span 
+                            className="text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded-full font-bold"
+                            style={{
+                              backgroundColor: isActive ? `${colors?.accent || '#18a1fd'}40` : 'rgba(255,255,255,0.1)',
+                            }}
+                          >
+                            {projectCount}
+                          </span>
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Projects Grid */}
+              <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+                <AnimatePresence mode="wait">
+                  {openCategory && projectsByCategory[openCategory] && (
+                    <motion.div
+                      key={openCategory}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.3 }}
+                      className="w-full h-full max-w-[1800px] mx-auto"
                     >
-                      {category}
-                    </button>
-                  );
-                })}
+                      {/* Responsive Grid - Auto-fits cards based on count and screen size */}
+                      <div 
+                        className="h-full w-full grid gap-2 sm:gap-3 md:gap-4 lg:gap-5 xl:gap-6 p-1 sm:p-2 md:p-3"
+                        style={{
+                          gridTemplateColumns: (() => {
+                            const count = projectsByCategory[openCategory].length;
+                            // Mobile: Max 2 columns
+                            // Tablet: Max 3 columns  
+                            // Desktop: Max 4 columns
+                            if (count === 1) return '1fr';
+                            if (count === 2) return 'repeat(2, 1fr)';
+                            if (count === 3) return 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))';
+                            if (count === 4) return 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))';
+                            if (count <= 6) return 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))';
+                            if (count <= 9) return 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))';
+                            return 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))';
+                          })(),
+                          gridAutoRows: 'minmax(0, 1fr)',
+                          alignContent: 'center',
+                        }}
+                      >
+                        {projectsByCategory[openCategory].map((project, idx) => (
+                          <div 
+                            key={project.id}
+                            className="flex items-center justify-center"
+                          >
+                            <ProjectCard 
+                              project={project} 
+                              index={idx}
+                              categoryColor={CATEGORY_COLORS[openCategory]}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-
-              {/* 3x2 Grid of Projects */}
-              {openCategory && projectsByCategory[openCategory] && (
-                <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
-                  <div className="grid grid-cols-3 gap-2 w-full auto-rows-fr" style={{ maxHeight: 'calc(100vh - 180px)' }}>
-                    {projectsByCategory[openCategory].slice(0, 6).map((project, idx) => (
-                      <ProjectCard 
-                        key={project.id}
-                        project={project} 
-                        index={idx}
-                        categoryColor={CATEGORY_COLORS[openCategory]}
-                        isMobile
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          </>
-        )}
+          )}
         </div>
       </main>
     </div>
