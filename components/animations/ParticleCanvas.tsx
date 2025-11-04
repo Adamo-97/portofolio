@@ -91,20 +91,31 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
     resize();
 
     const draw = (now: number) => {
-      if (!runningRef.current) return;
+      if (!runningRef.current) {
+        console.log('[ParticleCanvas] Animation stopped - runningRef.current is false');
+        return;
+      }
+      
+      // Initialize lastTimeRef on first frame
+      if (lastTimeRef.current === 0) {
+        lastTimeRef.current = now;
+        console.log('[ParticleCanvas] First frame initialized at:', now);
+      }
       
       const dt = Math.min((now - lastTimeRef.current) / 1000, 0.1);
-      lastTimeRef.current = now;
-
-      const w = vw();
-      const h = vh();
-
+      
       // Throttle to maxFps
       const minInterval = 1000 / maxFps;
       if (dt * 1000 < minInterval) {
         rafRef.current = requestAnimationFrame(draw);
         return;
       }
+      
+      console.log('[ParticleCanvas] Drawing frame - dt:', dt, 'particles:', dots.length);
+      lastTimeRef.current = now;
+
+      const w = vw();
+      const h = vh();
 
       ctx.clearRect(0, 0, w, h);
 
@@ -132,7 +143,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
     const handleResize = () => {
       resize();
       if (!runningRef.current && !prefersReduce) {
-        lastTimeRef.current = performance.now();
+        lastTimeRef.current = 0;
         runningRef.current = true;
         rafRef.current = requestAnimationFrame(draw);
       }
@@ -149,7 +160,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
         }
       } else {
         runningRef.current = true;
-        lastTimeRef.current = performance.now();
+        lastTimeRef.current = 0;
         rafRef.current = requestAnimationFrame(draw);
       }
     };
@@ -158,10 +169,14 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
     document.addEventListener("visibilitychange", handleVisibilityChange);
     
     // Start animation
+    console.log('[ParticleCanvas] Starting animation - prefersReduce:', prefersReduce, 'runningRef:', runningRef.current);
     if (!prefersReduce) {
       runningRef.current = true;
-      lastTimeRef.current = performance.now();
+      lastTimeRef.current = 0; // Reset to 0 so first frame initializes it
       rafRef.current = requestAnimationFrame(draw);
+      console.log('[ParticleCanvas] Animation frame requested:', rafRef.current);
+    } else {
+      console.log('[ParticleCanvas] Animation NOT started due to prefersReducedMotion');
     }
 
     return () => {
