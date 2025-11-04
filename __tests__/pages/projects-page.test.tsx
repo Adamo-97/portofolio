@@ -22,6 +22,12 @@ jest.mock('@/components/animations/ParticleCanvas', () => {
     return <canvas data-testid="particle-canvas" />;
   };
 });
+jest.mock('next/image', () => {
+  return function MockImage({ src, alt, ...props }: any) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt} {...props} />;
+  };
+});
 
 const mockProjects = [
   {
