@@ -91,15 +91,11 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
     resize();
 
     const draw = (now: number) => {
-      if (!runningRef.current) {
-        console.log('[ParticleCanvas] Animation stopped - runningRef.current is false');
-        return;
-      }
+      if (!runningRef.current) return;
       
       // Initialize lastTimeRef on first frame
       if (lastTimeRef.current === 0) {
         lastTimeRef.current = now;
-        console.log('[ParticleCanvas] First frame initialized at:', now);
       }
       
       const dt = Math.min((now - lastTimeRef.current) / 1000, 0.1);
@@ -111,7 +107,6 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
         return;
       }
       
-      console.log('[ParticleCanvas] Drawing frame - dt:', dt, 'particles:', dots.length);
       lastTimeRef.current = now;
 
       const w = vw();
@@ -169,14 +164,10 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
     document.addEventListener("visibilitychange", handleVisibilityChange);
     
     // Start animation
-    console.log('[ParticleCanvas] Starting animation - prefersReduce:', prefersReduce, 'runningRef:', runningRef.current);
     if (!prefersReduce) {
       runningRef.current = true;
       lastTimeRef.current = 0; // Reset to 0 so first frame initializes it
       rafRef.current = requestAnimationFrame(draw);
-      console.log('[ParticleCanvas] Animation frame requested:', rafRef.current);
-    } else {
-      console.log('[ParticleCanvas] Animation NOT started due to prefersReducedMotion');
     }
 
     return () => {
