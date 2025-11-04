@@ -26,7 +26,7 @@ const mockManyProjects = Array.from({ length: 12 }, (_, i) => ({
   id: `project-${i}`,
   title: `Project ${i + 1}`,
   description: `Description ${i + 1}`,
-  category: i % 3 === 0 ? 'Build' : i % 3 === 1 ? 'Design' : 'Research',
+  category: i % 3 === 0 ? 'Applications' : i % 3 === 1 ? 'Infrastructure' : 'Utilities',
   github_url: `https://github.com/test/project${i}`,
   languages: ['JavaScript', 'TypeScript'],
 }));
@@ -35,6 +35,11 @@ describe('Projects Page - Responsive & Scaling Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (apiClient.getProjects as jest.Mock).mockResolvedValue(mockManyProjects);
+    (apiClient.getSkillCategories as jest.Mock).mockResolvedValue([
+      { name: 'Applications', title: 'Applications', blurb: 'Test' },
+      { name: 'Infrastructure', title: 'Infrastructure', blurb: 'Test' },
+      { name: 'Utilities', title: 'Utilities', blurb: 'Test' },
+    ]);
   });
 
   describe('720p Resolution (1280x720)', () => {

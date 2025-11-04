@@ -28,7 +28,7 @@ const mockProjects = [
     id: '1',
     title: 'Project 1',
     description: 'Description 1',
-    category: 'Build',
+    category: 'Applications',
     github_url: 'https://github.com/test/project1',
     languages: ['JavaScript', 'React'],
     cover_image_url: 'https://example.com/image1.jpg',
@@ -37,7 +37,7 @@ const mockProjects = [
     id: '2',
     title: 'Project 2',
     description: 'Description 2',
-    category: 'Build',
+    category: 'Applications',
     github_url: 'https://github.com/test/project2',
     languages: ['TypeScript', 'Next.js'],
   },
@@ -45,10 +45,16 @@ const mockProjects = [
     id: '3',
     title: 'Project 3',
     description: 'Description 3',
-    category: 'Design',
+    category: 'Infrastructure',
     github_url: 'https://github.com/test/project3',
-    languages: ['Figma'],
+    languages: ['Terraform'],
   },
+];
+
+const mockCategories = [
+  { name: 'Applications', title: 'Applications', blurb: 'Test' },
+  { name: 'Infrastructure', title: 'Infrastructure', blurb: 'Test' },
+  { name: 'Utilities', title: 'Utilities', blurb: 'Test' },
 ];
 
 describe('ProjectsPageClient', () => {
@@ -57,6 +63,10 @@ describe('ProjectsPageClient', () => {
     // Reset window size
     global.innerWidth = 1920;
     global.innerHeight = 1080;
+    
+    // Mock both API calls
+    (apiClient.getProjects as jest.Mock).mockResolvedValue(mockProjects);
+    (apiClient.getSkillCategories as jest.Mock).mockResolvedValue(mockCategories);
   });
 
   describe('Loading State', () => {
