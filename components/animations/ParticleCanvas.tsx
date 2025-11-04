@@ -90,6 +90,8 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
     resize();
 
     const draw = (now: number) => {
+      if (!running) return;
+      
       const dt = Math.min((now - lastTimeRef.current) / 1000, 0.1);
       lastTimeRef.current = now;
 
@@ -106,7 +108,7 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
       ctx.clearRect(0, 0, w, h);
 
       for (const d of dots) {
-        // Move particle
+        // Move particle upward
         d.y -= d.sp * 60 * dt;
         if (d.y < -10) d.y = h + 10;
 
@@ -121,27 +123,53 @@ const ParticleCanvas: React.FC<ParticleCanvasProps> = memo(({
         ctx.fill();
       }
 
-      rafRef.current = requestAnimationFrame(draw);
+      if (running) {
+        rafRef.current = requestAnimationFrame(draw);
+      }
     };
 
     const handleResize = () => {
       resize();
-      if (!running) {
+      if (!running && !prefersReduce) {
         lastTimeRef.current = performance.now();
         running = true;
         rafRef.current = requestAnimationFrame(draw);
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (prefersReduce) return;
+      
+      if (document.hidden) {
+        running = false;
+        if (rafRef.current !== null) {
+          cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
+        }
+      } else {
+        running = true;
+        lastTimeRef.current = performance.now();
+        rafRef.current = requestAnimationFrame(draw);
+      }
+    };
+
     window.addEventListener("resize", handleResize);
-    lastTimeRef.current = performance.now();
-    rafRef.current = requestAnimationFrame(draw);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    // Start animation
+    if (!prefersReduce) {
+      running = true;
+      lastTimeRef.current = performance.now();
+      rafRef.current = requestAnimationFrame(draw);
+    }
 
     return () => {
+      running = false;
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
       }
       window.removeEventListener("resize", handleResize);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [particlesDesktop, particlesMobile, speedMultiplier, twinkleRate, color, maxFps]);
 

@@ -15,6 +15,17 @@ const ProjectsPageClient: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [showParticles, setShowParticles] = useState(false);
+  const [viewportKey, setViewportKey] = useState(0); // Force re-render on resize
+
+  // Handle viewport resize for responsive scaling
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportKey(prev => prev + 1);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch projects from API
   useEffect(() => {
@@ -140,20 +151,52 @@ const ProjectsPageClient: React.FC = () => {
                 ))}
               </div>
               
-              {/* Horizontal Projects Display - NO SCROLLING, Responsive scale */}
+              {/* Horizontal Projects Display - Responsive scale for all screen sizes */}
               {openCategory && projectsByCategory[openCategory] && (
-                <div className="w-full flex justify-center items-center flex-1 min-h-0 overflow-hidden px-4">
+                <div className="w-full flex justify-center items-center flex-1 min-h-0 overflow-hidden px-2 sm:px-4">
                   <div 
-                    className="flex gap-4 sm:gap-6 lg:gap-8 justify-center items-center flex-wrap"
+                    className="flex gap-3 sm:gap-4 lg:gap-6 justify-center items-center flex-wrap"
                     style={{ 
                       maxWidth: '100%',
                       maxHeight: '100%',
                       transform: (() => {
                         const count = projectsByCategory[openCategory].length;
-                        if (count <= 3) return 'scale(1)';
-                        if (count <= 6) return 'scale(0.85)';
-                        if (count <= 9) return 'scale(0.7)';
-                        return 'scale(0.6)';
+                        const width = window.innerWidth;
+                        const height = window.innerHeight;
+                        
+                        // Base scale on both count and viewport size
+                        let scale = 1;
+                        
+                        // For 720p (1280x720) and similar resolutions
+                        if (height <= 768) {
+                          if (count <= 2) scale = 0.75;
+                          else if (count <= 3) scale = 0.65;
+                          else if (count <= 4) scale = 0.55;
+                          else if (count <= 6) scale = 0.50;
+                          else scale = 0.45;
+                        }
+                        // For 1080p and above
+                        else if (height <= 1080) {
+                          if (count <= 3) scale = 1;
+                          else if (count <= 4) scale = 0.85;
+                          else if (count <= 6) scale = 0.75;
+                          else if (count <= 9) scale = 0.65;
+                          else scale = 0.55;
+                        }
+                        // For larger screens
+                        else {
+                          if (count <= 3) scale = 1;
+                          else if (count <= 6) scale = 0.90;
+                          else if (count <= 9) scale = 0.75;
+                          else scale = 0.65;
+                        }
+                        
+                        // Additional scaling for narrow screens
+                        if (width < 1366) {
+                          scale *= 0.9;
+                        }
+                        
+                        return `scale(${scale})`;
                       })(),
                       transformOrigin: 'center',
                       transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
