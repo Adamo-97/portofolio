@@ -18,9 +18,6 @@ const nextConfig = {
   // Compression
   compress: true,
 
-  // Performance optimizations
-  swcMinify: true,
-
   // Experimental features for better performance
   experimental: {
     optimizeCss: true,
