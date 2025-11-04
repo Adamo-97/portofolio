@@ -126,16 +126,23 @@ export const getRoadmap = cache(async () => {
 export const getSkillCategories = cache(async () => {
   const { data, error } = await supabase
     .from("skill_category")
-    .select("key,title,blurb,sort_order")
-    .eq("is_active", true)
-    .order("sort_order", { ascending: true });
+    .select("name,title,blurb");
 
   if (error) {
     console.error("[cache/getSkillCategories] db error:", error);
     throw new Error("Failed to fetch skill categories");
   }
 
-  return data ?? [];
+  // Map to the expected format (alphabetical order, using name as key)
+  const mapped = (data ?? [])
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((c) => ({
+      key: c.name,                 // stable key used by skill.category FK
+      title: c.title ?? c.name,    // fallback to name
+      blurb: c.blurb ?? "",        // optional description
+    }));
+
+  return mapped;
 });
 
 /**
