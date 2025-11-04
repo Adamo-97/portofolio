@@ -1,5 +1,7 @@
 const nextConfig = {
   reactStrictMode: true,
+
+  // Image optimization
   images: {
     remotePatterns: [
       {
@@ -8,6 +10,21 @@ const nextConfig = {
         pathname: "/**",
       },
     ],
+    formats: ["image/webp", "image/avif"],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+
+  // Compression
+  compress: true,
+
+  // Performance optimizations
+  swcMinify: true,
+
+  // Experimental features for better performance
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ["framer-motion", "@supabase/supabase-js"],
   },
 
   // Security headers
@@ -35,6 +52,16 @@ const nextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+      // Cache static assets aggressively
+      {
+        source: "/public/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },

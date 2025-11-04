@@ -2,34 +2,32 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { isValidEmail, clamp, NAME_MAX, MESSAGE_MAX } from "@/lib/contact/validate";
 import { sendContactMail } from "@/lib/contact/mailer";
+import { createRateLimitMiddleware } from "@/lib/utils/rate-limit";
 
 export const runtime = "nodejs"; // ensure Node runtime for nodemailer
 
 const MAX_TOTAL_MB = 10; // server-side guard to match your UI
 const MAX_TOTAL_BYTES = MAX_TOTAL_MB * 1024 * 1024;
 
-// naive in-memory rate limit (per IP); swap for Redis in prod if you like
-const bucket = new Map<string, { count: number; ts: number }>();
-function ratelimit(ip: string, limit = 5, windowMs = 10 * 60 * 1000) {
-  const now = Date.now();
-  const cur = bucket.get(ip);
-  if (!cur || now - cur.ts > windowMs) {
-    bucket.set(ip, { count: 1, ts: now });
-    return true;
-  }
-  if (cur.count >= limit) return false;
-  cur.count += 1;
-  return true;
-}
+// Create rate limiter: 5 requests per 10 minutes
+const rateLimit = createRateLimitMiddleware({ 
+  limit: 5, 
+  windowMs: 10 * 60 * 1000 
+});
 
 export async function POST(req: Request) {
   try {
-    const ip =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      "0.0.0.0";
-    if (!ratelimit(ip)) {
-      return NextResponse.json({ ok: false, error: "Too many requests. Please try later." }, { status: 429 });
+    // Check rate limit
+    const rateLimitResult = rateLimit(req);
+    if (!rateLimitResult.success) {
+      const retryAfter = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+      return NextResponse.json(
+        { ok: false, error: "Too many requests. Please try later." },
+        { 
+          status: 429,
+          headers: { "Retry-After": String(retryAfter) }
+        }
+      );
     }
 
     const form = await req.formData();

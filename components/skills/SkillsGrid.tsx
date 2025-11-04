@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useViewportStage } from "./useViewportStage";
 import { SkillCard } from "./SkillCard";
 import LoadingAnimation from "@/components/LoadingAnimation";
+import { ErrorFallback } from "@/components/ErrorBoundary";
+import { apiClient } from "@/lib/utils/fetch-client";
 
 const BASE = { cardW: 360, gap: 24, cardRatio: 4 / 3, padY: 40 };
 type Spec = { cols: number; rows: number };
@@ -24,45 +26,41 @@ export default function SkillsGrid() {
   const [allSkills, setAllSkills] = useState<UISkill[]>([]);
   const [cats, setCats] = useState<{ key: string; title: string; blurb: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Fetch categories (DB: skill_category with title/blurb)
+  // Fetch categories and skills
   useEffect(() => {
-    let off = false;
-    (async () => {
+    let cancelled = false;
+    
+    const fetchData = async () => {
       try {
-        const r = await fetch("/api/skill-categories", { cache: "no-store" });
-        if (!r.ok) throw new Error(String(r.status));
-        const items = await r.json();
-        if (!off) setCats(items);
-      } catch (e) {
-        console.error("[SkillsGrid] fetch /api/skill-categories failed:", e);
-        if (!off) setCats([]);
-      }
-    })();
-    return () => { off = true; };
-  }, []);
-
-  // ✅ Fetch skills (Supabase-backed)
-  useEffect(() => {
-    let off = false;
-    (async () => {
-      try {
-        const r = await fetch("/api/skills", { cache: "no-store" });
-        if (!r.ok) throw new Error(String(r.status));
-        const items: UISkill[] = await r.json();
-        if (!off) {
-          setAllSkills(items);
+        setLoading(true);
+        setError(null);
+        
+        // Fetch both in parallel
+        const [categoriesData, skillsData] = await Promise.all([
+          apiClient.getSkillCategories(),
+          apiClient.getSkills(),
+        ]);
+        
+        if (!cancelled) {
+          setCats(categoriesData);
+          setAllSkills(skillsData);
           setLoading(false);
         }
-      } catch (e) {
-        console.error("[SkillsGrid] fetch /api/skills failed:", e);
-        if (!off) {
-          setAllSkills([]);
+      } catch (err) {
+        console.error("[SkillsGrid] fetch error:", err);
+        if (!cancelled) {
+          setError(err as Error);
           setLoading(false);
         }
       }
-    })();
-    return () => { off = true; };
+    };
+
+    fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Bucket skills by fetched categories
@@ -94,6 +92,18 @@ export default function SkillsGrid() {
     return (
       <main className="flex items-center justify-center min-h-screen bg-black">
         <LoadingAnimation text="Loading skills..." />
+      </main>
+    );
+  }
+
+  // Error state with retry
+  if (error) {
+    return (
+      <main className="flex items-center justify-center min-h-screen bg-black">
+        <ErrorFallback 
+          error={error} 
+          onRetry={() => window.location.reload()} 
+        />
       </main>
     );
   }

@@ -1,40 +1,15 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/backend/supabaseClient";
+import { getSkills } from "@/lib/cache/request-cache";
 
 // Cache skills data for 1 hour (skills don't change frequently)
 export const revalidate = 3600;
 
 export async function GET() {
-  // Pull all skills; categories are fixed in your UI model
-  const { data, error } = await supabase
-    .from("skill")
-    .select("id,name,category,icon_bucket,icon_path,icon_alt,created_at")
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    console.error("[/api/skills] db error:", error);
+  try {
+    const skills = await getSkills();
+    return NextResponse.json(skills);
+  } catch (error) {
+    console.error("[/api/skills] error:", error);
     return NextResponse.json({ error: "db" }, { status: 500 });
   }
-
-  // Map to the UI-friendly shape your components already use
-  const mapped = (data ?? []).map((r) => {
-    const path = r.icon_path ?? "";
-    const src = /^https?:\/\//i.test(path)
-      ? path
-      : supabase.storage.from(r.icon_bucket).getPublicUrl(path).data.publicUrl;
-
-    return {
-      id: r.id,
-      name: r.name,
-      category: r.category,      // e.g., "Frontend", "Languages", etc.
-      src,                       // public icon URL (Supabase Storage)
-      alt: r.icon_alt ?? r.name, // a11y fallback
-      // Optional fields expected by UI (safe defaults to preserve design/order)
-      weight: 0,
-      xOffset: 0,
-      yOffset: 0,
-    };
-  });
-
-  return NextResponse.json(mapped);
 }
