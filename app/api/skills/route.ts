@@ -42,7 +42,7 @@ export async function GET() {
         } else {
           src = publicUrl;
         }
-      } catch (e) {
+      } catch {
         // If metadata fails, fall back to the public URL
         src = publicUrl;
       }

@@ -19,12 +19,32 @@ export async function GET() {
     return NextResponse.json({ error: "db" }, { status: 500 });
   }
 
-  // 2) map to DTO
-  const mapped = (data ?? []).map((r) => {
+  // 2) map to DTO, attempt to append cache-busting query param using storage metadata
+  const mapped = await Promise.all((data ?? []).map(async (r) => {
     const path = r.icon_path ?? "";
-    const icon = /^https?:\/\//i.test(path)
-      ? path
-      : supabase.storage.from(r.icon_bucket).getPublicUrl(path).data.publicUrl;
+
+    let icon: string | undefined;
+    if (/^https?:\/\//i.test(path)) {
+      icon = path;
+    } else if (path) {
+      const publicUrl = supabase.storage.from(r.icon_bucket).getPublicUrl(path).data.publicUrl;
+
+      try {
+        // cast to any because TS types for the client may not include getMetadata
+        const storageAny: any = supabase.storage.from(r.icon_bucket);
+        const metaRes = await storageAny.getMetadata(path);
+        const meta = metaRes?.data;
+        if (meta && meta.updated_at) {
+          const t = Date.parse(meta.updated_at as string) || Date.now();
+          icon = `${publicUrl}?v=${t}`;
+        } else {
+          icon = publicUrl;
+        }
+      } catch {
+        // If metadata fetch fails, fall back to the public URL
+        icon = publicUrl;
+      }
+    }
 
     return {
       id: r.id,
@@ -34,7 +54,7 @@ export async function GET() {
       from: r.start_date,
       to: r.end_date ?? null,
     };
-  });
+  }));
 
   // 3) sort ascending for left→right reading order
   mapped.sort((a, b) => new Date(a.from!).getTime() - new Date(b.from!).getTime());
