@@ -9,21 +9,21 @@
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=github-actions)](https://github.com/features/actions)
 [![Tests](https://img.shields.io/badge/Tests-17_passing-success?logo=jest)](https://jestjs.io/)
 
-## ✨ Features
+##  Features
 
-- 🎨 **Modern Design** - Glass-morphism effects, smooth animations, particle backgrounds
-- 📱 **Fully Responsive** - Mobile-first design, works on all devices
-- ⚡ **Performance Optimized** - 90+ Lighthouse scores, code splitting, lazy loading
-- 🔥 **Dynamic Content** - All content managed via Supabase (no redeployment needed)
-- 📧 **Contact Form** - Email integration with Nodemailer, rate limiting, validation
-- 📄 **CV Download** - Download resume directly from Supabase Storage with state feedback
-- 🎯 **SEO Friendly** - Meta tags, sitemap, robots.txt
-- ♿ **Accessible** - WCAG AA compliant, keyboard navigation, screen reader support
-- 🌙 **Dark Theme** - Elegant dark mode design with cornflowerblue accents
-- 🧪 **Automated Testing** - Jest + React Testing Library with 17 tests
-- 🚀 **CI/CD Pipeline** - GitHub Actions with automated deployment to Vercel
+-  **Modern Design** - Glass-morphism effects, smooth animations, particle backgrounds
+-  **Fully Responsive** - Mobile-first design, works on all devices
+-  **Performance Optimized** - 90+ Lighthouse scores, code splitting, lazy loading
+-  **Dynamic Content** - All content managed via Supabase (no redeployment needed)
+-  **Contact Form** - Email integration with Nodemailer, rate limiting, validation
+-  **CV Download** - Download resume directly from Supabase Storage with state feedback
+-  **SEO Friendly** - Meta tags, sitemap, robots.txt
+-  **Accessible** - WCAG AA compliant, keyboard navigation, screen reader support
+-  **Dark Theme** - Elegant dark mode design with cornflowerblue accents
+-  **Automated Testing** - Jest + React Testing Library with 17 tests
+-  **CI/CD Pipeline** - GitHub Actions with automated deployment to Vercel
 
-## 📚 Documentation
+##  Documentation
 
 Comprehensive documentation is available in the `/docs` folder:
 
@@ -118,7 +118,7 @@ portofolio/
     └── hooks/             # Custom React hooks
 ```
 
-## 🎨 Pages
+##  Pages
 
 ### Home (`/`)
 
@@ -163,7 +163,7 @@ Contact form with email integration, validation, and rate limiting.
 - **ESLint** - Code linting
 - **VS Code** - Recommended editor
 
-## 🌐 Environment Variables
+##  Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
@@ -175,7 +175,7 @@ Contact form with email integration, validation, and rate limiting.
 | `SMTP_USER` | SMTP username/email | Yes |
 | `SMTP_PASS` | SMTP password/app password | Yes |
 
-## 📦 Available Scripts
+##  Available Scripts
 
 ```bash
 npm run dev          # Start development server (port 3000/3001)
@@ -197,60 +197,8 @@ Automatic deployments on every push to `main`.
 
 See [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) for detailed instructions.
 
-## 📊 Features Breakdown
-
-### ✅ Implemented
-
-- [x] Responsive design (mobile, tablet, desktop)
-- [x] Dynamic content management via Supabase
-- [x] Skills page with category filtering
-- [x] Projects page with folder-style categories
-- [x] Career roadmap timeline
-- [x] Contact form with email integration
-- [x] CV download from Supabase Storage
-- [x] Particle animation backgrounds
-- [x] Glass-morphism UI effects
-- [x] Loading states and error handling
-- [x] Rate limiting on contact form
-- [x] SEO optimization
-- [x] Accessibility features
-
-### 🔮 Future Enhancements
-
-- [ ] Blog section with MDX
-- [ ] Testimonials/recommendations
-- [ ] Project detail modals
-- [ ] Dark/Light theme toggle
-- [ ] Internationalization (i18n)
-- [ ] Analytics dashboard
-- [ ] Admin panel for content management
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome!
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
-
-- [Next.js](https://nextjs.org/) - React framework
-- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
-- [Framer Motion](https://www.framer.com/motion/) - Animation library
-- [Supabase](https://supabase.com/) - Backend platform
-- [Vercel](https://vercel.com/) - Deployment platform
-
-## 📧 Contact
-
-**Your Name** - [your-email@example.com](mailto:your-email@example.com)
-
-**Website** - [https://yoursite.com](https://yoursite.com)
-
-**GitHub** - [@Adamo-97](https://github.com/Adamo-97)
